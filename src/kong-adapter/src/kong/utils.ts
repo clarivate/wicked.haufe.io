@@ -618,6 +618,12 @@ export function kongPostApi(apiConfig: KongApi, callback: Callback<KongApi>): vo
     let persistedService: KongService = null;
     let persistedRoute: KongRoute[] = [];
 
+    if((service.retries == null || service.retries == undefined) && apiConfig.hasOwnProperty('retries'))
+        {
+            //overriding retries value from wicked-sdk function , prevents retries being null when '0' in apiConfig
+            service.retries =  0 ; 
+        }
+
     let flow: ((...args: any[]) => void)[] = [];
 
     flow.push(
@@ -667,6 +673,12 @@ export function kongPatchApi(apiId: string, apiConfig: KongApi, callback: Callba
     const { service, routes } = wicked.kongApiToServiceAndRoutes(apiConfig);
     let persistedService: KongService = null;
     let persistedRoute: KongRoute[] = [];
+
+    if((service.retries == null || service.retries == undefined) && apiConfig.hasOwnProperty('retries'))
+        {
+            //overriding retries value from wicked-sdk function , prevents retries being null when '0' in apiConfig
+            service.retries =  0 ; 
+        }
 
     service.id = apiId;
 
