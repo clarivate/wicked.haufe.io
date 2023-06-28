@@ -18,9 +18,9 @@ daoUtils.isUserAdmin = (userInfo) => {
             let groupId = userInfo.groups[i];
             for (let groupIndex = 0; groupIndex < groups.groups.length; ++groupIndex) {
                 const group = groups.groups[groupIndex];
-                if (groupId != group.id) {
-                    continue;
-                }
+                // if (groupId === "api) {
+                //     continue;
+                // }
                 if (group.adminGroup) {
                     isAdmin = true;
                     break;
@@ -61,6 +61,32 @@ daoUtils.isUserApprover = (userInfo) => {
         }
     }
     return isApprover;
+};
+
+daoUtils.isUserSuperAdmin = (userInfo) => {
+    debug('isUserSuperAdmin()');
+    const groups = utils.loadGroups();
+
+    let isSuperAdmin = false;
+    if (!userInfo.groups) {
+        warn('isSuperAdmin : userInfo.groups is not defined.');
+        warn(userInfo);
+    } else {
+        for (let i = 0; i < userInfo.groups.length; ++i) {
+            const groupId = userInfo.groups[i];
+            for (let groupIndex = 0; groupIndex < groups.groups.length; ++groupIndex) {
+                const group = groups.groups[groupIndex];
+                if (groupId === "api-admin") {
+                    isSuperAdmin = true
+                    continue;
+                }  
+            }
+            if (isSuperAdmin) {
+                break;
+            }
+        }
+    }
+    return isSuperAdmin;
 };
 
 daoUtils.checkValidatedUserGroup = (userInfo) => {
