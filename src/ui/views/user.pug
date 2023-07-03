@@ -159,14 +159,6 @@ block content
 
             br
             br
-            p #{JSON.stringify(authUser)}
-            if authUser.superadmin
-                p Welcome, Super Admin!
-            else
-                p Welcome!
-            br
-           
-
             if authUser.admin && authUser.superadmin
                 input(type='hidden' name='__updategroups' value='true')
                 .panel.panel-default
@@ -178,10 +170,10 @@ block content
                                 label
                                     if group.isMember 
                                         input(type='checkbox' name=group.id value=group.id checked)
-                                        | #{group.name,"this is from if"}
+                                        | #{group.name}
                                     else
                                         input(type='checkbox' name=group.id value=group.id)
-                                        | #{group.name,"this is from else"}
+                                        | #{group.name}
                                     if glob.validatedUserGroup && glob.validatedUserGroup == group.id
                                         small &nbsp;<i>This is the default group for users with a validated email address.</i>
                                     if group.adminGroup
@@ -202,7 +194,7 @@ block content
                                         label
                                             if group.isMember 
                                                 input(type='checkbox' name=group.id value=group.id checked)
-                                                | #{group.name,"this is from if"}
+                                                | #{group.name}
                                             else
                                                 input(type='checkbox' name=group.id value=group.id)
                                                 | #{group.name}
