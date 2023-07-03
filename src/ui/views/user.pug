@@ -159,7 +159,15 @@ block content
 
             br
             br
-            if authUser.admin
+            p #{JSON.stringify(authUser)}
+            if authUser.superadmin
+                p Welcome, Super Admin!
+            else
+                p Welcome!
+            br
+           
+
+            if authUser.admin && authUser.superadmin
                 input(type='hidden' name='__updategroups' value='true')
                 .panel.panel-default
                     .panel-heading
@@ -168,19 +176,45 @@ block content
                         for group in groups
                             .checkbox
                                 label
-                                    if group.isMember
+                                    if group.isMember 
                                         input(type='checkbox' name=group.id value=group.id checked)
-                                        | #{group.name}
+                                        | #{group.name,"this is from if"}
                                     else
                                         input(type='checkbox' name=group.id value=group.id)
-                                        | #{group.name}
+                                        | #{group.name,"this is from else"}
                                     if glob.validatedUserGroup && glob.validatedUserGroup == group.id
                                         small &nbsp;<i>This is the default group for users with a validated email address.</i>
                                     if group.adminGroup
                                         strong &nbsp;Admin group
                                     if group.approverGroup
-                                            strong &nbsp;Approver group
-                br
+                                        strong &nbsp;Approver group
+
+            else if authUser.admin 
+                input(type='hidden' name='__updategroups' value='true')
+                .panel.panel-default
+                    .panel-heading
+                        h4.panel-title User Groups
+                    .panel-body
+                        for group in groups
+                            if group.id !== "api-admin" && !authUser.superadmin
+                                break 
+                                    .checkbox
+                                        label
+                                            if group.isMember 
+                                                input(type='checkbox' name=group.id value=group.id checked)
+                                                | #{group.name,"this is from if"}
+                                            else
+                                                input(type='checkbox' name=group.id value=group.id)
+                                                | #{group.name}
+                                            if glob.validatedUserGroup && glob.validatedUserGroup == group.id
+                                                small &nbsp;<i>This is the default group for users with a validated email address.</i>
+                                            if group.adminGroup
+                                                strong &nbsp;Admin group
+                                            if group.approverGroup
+                                                strong &nbsp;Approver group
+            br
+           
+            br
 
             if glob.api && glob.api.portal && glob.api.portal.enableApi && authUser.clientId && authUser.clientSecret
                 .panel.panel-default

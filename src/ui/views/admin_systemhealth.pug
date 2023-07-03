@@ -73,7 +73,7 @@ block content
 
         pre= glob.lastCommit
 
-        .panel.panel-danger
+        //- .panel.panel-danger -//
             .panel-heading
                 +panelTitle('Reload Configuration', null, 'dangerzone')
             div(id='dangerzone').collapse.panel-collapse
@@ -82,7 +82,7 @@ block content
                         By clicking this button, you may reload the configuration of this API portal. Technically speaking,
                         this will restart the API container/process, which in turn will lead to all other components restarting,
                         one after the other. Please note that this will lead to <b>a certain amount of downtime</b> of the API
-                        Portal and the Authorization Server, but <b>not</b> of the actual Gateway.
+                        //- Portal and the Authorization Server, but <b>not</b> of the actual Gateway.
 
                     form(role='form' action='/admin/restart' method='POST' onsubmit='return confirmRestart();')
                         button(class='btn btn-danger' type='submit') Restart Components/Reload Configuration

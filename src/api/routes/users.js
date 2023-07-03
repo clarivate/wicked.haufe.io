@@ -120,6 +120,8 @@ users.isUserApprover = function (app, userInfo) {
     return daoUtils.isUserApprover(userInfo);
 };
 
+
+
 /* Does the user belong to a specific group, or is he an admin? */
 users.hasUserGroup = function (app, userInfo, group) {
     debug('hasUserGroup()');
@@ -179,6 +181,7 @@ function postProcessUser(userInfo) {
     if (userInfo) {
         userInfo.admin = daoUtils.isUserAdmin(userInfo);
         userInfo.approver = daoUtils.isUserApprover(userInfo);
+        userInfo.superadmin = daoUtils.isUserSuperAdmin(userInfo);
 
         // These shouldn't be here anymore anyway, but let's delete them just in case
         delete userInfo.name;
