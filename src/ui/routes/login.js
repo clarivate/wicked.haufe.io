@@ -146,7 +146,7 @@ Error description: ${errorDescription}`, next);
                 debug(userInfo);
 
                 // Note that this is only to make sure the UI behaves; there are some specialties
-                // for admins and approvers. There are backend checks for all of these things as well
+                // for admins and approvers. There are s checks for all of these things as well
                 // so that this is not very security relevant.
                 profile.admin = userInfo.admin;
                 profile.approver = userInfo.approver;
