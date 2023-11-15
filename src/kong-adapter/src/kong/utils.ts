@@ -307,7 +307,12 @@ function kongPagingGet(url: string, callback: Callback<any>) {
         pagingUrl = `${url}&size=${size}`;
     else
         pagingUrl = `${url}?size=${size}`;
+<<<<<<< HEAD
     console.log(pagingUrl);
+=======
+    // console.log(pagingUrl);
+    debug(pagingUrl)
+>>>>>>> b49e166c0b7e70229d8d560848f775e4aa7345f3
     const dataArray = [];
     let finished = false;
     async.until(function () {
@@ -322,7 +327,12 @@ function kongPagingGet(url: string, callback: Callback<any>) {
                 dataArray.push(d);
             // console.log(result.data);
             if (result.next) {
+<<<<<<< HEAD
                 pagingUrl = `${result.next}&size=${size}`;
+=======
+            // Replace first / from pagingUrl as it gets added in kongAction function
+                pagingUrl = `${result.next.replace('\/','')}&size=${size}`;
+>>>>>>> b49e166c0b7e70229d8d560848f775e4aa7345f3
             } else {
                 finished = true;
             }

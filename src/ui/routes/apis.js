@@ -238,6 +238,7 @@ router.get('/:api', function (req, res, next) {
             let partnerOnly = false;
             // disable details for logged in partner
             if (apiInfo.requiredGroup && apiInfo.partner) {
+<<<<<<< HEAD
                 partnerOnly = !(
                   userInfo.groups &&
                   userInfo.groups.length > 0 &&
@@ -245,6 +246,9 @@ router.get('/:api', function (req, res, next) {
                     return e == apiInfo.requiredGroup;
                   })
                 );
+=======
+                partnerOnly = !(userInfo.groups && userInfo.groups.length > 0 && userInfo.groups.find((e) => {return e == apiInfo.requiredGroup;}));
+>>>>>>> b49e166c0b7e70229d8d560848f775e4aa7345f3
             }    
 
             const apps = [];

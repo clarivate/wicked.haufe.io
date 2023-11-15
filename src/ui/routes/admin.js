@@ -131,9 +131,13 @@ router.get('/approvals_csv', mustBeAdminOrApproverMiddleware, function (req, res
             if (err)
                 return next(err);
             const outStream = fs.createWriteStream(path);
+<<<<<<< HEAD
             outStream.write(
               'User;Application;Description;Trusted;Api;Plan;Date (UTC);Description\n',
             );
+=======
+            outStream.write('User;Application;Trusted;Api;Plan;Date (UTC);Description\n');
+>>>>>>> b49e166c0b7e70229d8d560848f775e4aa7345f3
             apiResponse.forEach(item => {
                 let trusted = item.application.trusted ? 'Yes' : '-';
                 let date = utils.dateFormat(new Date(item.changedDate), "%Y-%m-%d %H:%M:%S", true);

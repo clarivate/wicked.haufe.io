@@ -1,7 +1,11 @@
 'use strict';
 
 /* global app, __dirname */
+<<<<<<< HEAD
 const proxy = require('express-http-proxy');
+=======
+const proxy = require("express-http-proxy");
+>>>>>>> b49e166c0b7e70229d8d560848f775e4aa7345f3
 
 const express = require('express');
 const { debug, info, warn, error } = require('portal-env').Logger('portal:app');
@@ -65,10 +69,15 @@ app.use('/assets/jsgrid', express.static(path.join(__dirname, 'node_modules/jsgr
 app.use('/assets/highlight', express.static(path.join(__dirname, 'node_modules/highlight.js/lib')));
 app.use('/assets/highlight/css', express.static(path.join(__dirname, 'node_modules/highlight.js/styles')));
 app.use('/assets/marked', express.static(path.join(__dirname, 'node_modules/marked')));
+<<<<<<< HEAD
 app.use(
   '/assets/jquery-ui',
   express.static(path.join(__dirname, 'node_modules/jquery-ui-dist')),
 );
+=======
+app.use('/assets/jquery-ui', express.static(path.join(__dirname, 'node_modules/jquery-ui-dist')));
+
+>>>>>>> b49e166c0b7e70229d8d560848f775e4aa7345f3
 // Initializing state
 app.use('/ping', ping);
 app.use(function (req, res, next) {
@@ -182,16 +191,25 @@ app.initialize = function (done) {
        // Get the API key value from the environment variable
        const apiKey = app.portalGlobals.network.clarivateapikey;
 
+<<<<<<< HEAD
        // Add the 'X-ApiKey' header to the request headers
        req.headers['X-ApiKey'] = apiKey;
        // Continue processing the request by calling the 'next' function
        return next();
    };
    app.use('/clarivate',  checkLoggedInUserId, proxy(app.portalGlobals.network.clarivateUrl,{
+=======
+    // -- CLARIVATE HOOK
+    app.use('/clarivate', proxy(app.portalGlobals.network.clarivateUrl,{
+>>>>>>> b49e166c0b7e70229d8d560848f775e4aa7345f3
         proxyReqPathResolver: (req) => {
             return '/clarivate'+req.url;
         }
     }));
+<<<<<<< HEAD
+=======
+
+>>>>>>> b49e166c0b7e70229d8d560848f775e4aa7345f3
     app.get('/contact', function (req, res, next) { res.redirect('/content/contact'); });
     app.use('/content', content);
     app.use('/users', users);
