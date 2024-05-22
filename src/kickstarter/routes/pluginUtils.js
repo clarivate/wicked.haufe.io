@@ -146,7 +146,7 @@ function fixRateLimiting(data) {
         if (data.config.hasOwnProperty(prop) && data.config[prop] !== "")
             data.config[prop] = Number(data.config[prop]);
         else if (data.config.hasOwnProperty(prop))
-            delete data.config[prop];
+            data.config[prop]=null;
     }
     return data;
 }
