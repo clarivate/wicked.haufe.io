@@ -537,6 +537,12 @@ utils.loadApis = function (app) {
                 mandatory_scope: false
             };
         }
+        if (!thisApi.hasOwnProperty('keyRotationEnabled') || !thisApi.keyRotationEnabled) {
+            delete thisApi.keyRotationEnabled;
+            delete thisApi.rotationStrategy;
+        } else if (!thisApi.hasOwnProperty('rotationStrategy')) {
+            thisApi.rotationStrategy = { type: 'automatic', days: 30 };
+        }
     }
     return apis;
 };

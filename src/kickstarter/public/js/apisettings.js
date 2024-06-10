@@ -5,8 +5,43 @@ Vue.component('wicked-api', {
     data: function () {
         return {
             newScopeId: '',
-            newScopeDesc: ''
+            newScopeDesc: '',
+            selectedOption: 'custom',
         };
+    },
+    watch: {
+        'value.rotationStrategy.type': function (newType) {
+            if (newType === 'automatic') {
+                this.value.rotationStrategy.days = 30;
+            }
+        },
+        'value.keyRotationEnabled': function (newVal) {
+            if (newVal && !this.value.rotationStrategy) {
+                this.$set(this.value, 'rotationStrategy', { type: 'automatic', days: 30 });
+            }
+            this.$emit('input', this.value);
+        },
+        'value.rotationStrategy.days': function (newDays) {
+            if ([30, 60, 90].includes(newDays)) {
+                this.selectedOption = newDays.toString();
+            } else {
+                this.selectedOption = 'custom';
+            }
+        },
+        selectedOption: function (newVal) {
+            if (newVal !== 'custom') {
+                this.value.rotationStrategy.days = parseInt(newVal);
+            }
+        }
+    },
+    mounted() {
+        if (this.value.rotationStrategy && this.value.rotationStrategy.type === 'manual') {
+            if ([30, 60, 90].includes(this.value.rotationStrategy.days)) {
+                this.selectedOption = this.value.rotationStrategy.days.toString();
+            } else {
+                this.selectedOption = 'custom';
+            }
+        }
     },
     methods: {
         deleteScope: function (scopeId) {
@@ -54,6 +89,32 @@ Vue.component('wicked-api', {
                 <option value="none">Public API/Authorization not required (none)</option>
             </select>
             <wicked-checkbox v-if="value.auth !== 'none'" v-model="value.hide_credentials" label="<b>Hide Credentials</b> from upstream server"/>
+        </div>
+        <div v-if="value.auth === 'key-auth'">
+            <wicked-checkbox v-model="value.keyRotationEnabled" label="<b>Key Rotation Enabled</b>: Enable key rotation" />
+            <div v-if="value.keyRotationEnabled">
+                <label><b>Rotation Strategy:</b></label>
+                <select v-model="value.rotationStrategy.type" class="form-control">
+                    <option value="manual">Manual</option>
+                    <option value="automatic">Automatic</option>
+                </select>
+                <div v-if="value.rotationStrategy.type === 'manual'">
+                    <label>Number of Days:</label>
+                    <select v-model="selectedOption" class="form-control">
+                        <option value="30">30 days</option>
+                        <option value="60">60 days</option>
+                        <option value="90">90 days</option>
+                        <option value="custom">Custom</option>
+                    </select>
+                    <div v-if="selectedOption === 'custom'">
+                        <input type="number" v-model="value.rotationStrategy.days" class="form-control" />
+                    </div>
+                </div>
+                <div v-else-if="value.rotationStrategy.type === 'automatic'">
+                    <p>Rotation will occur automatically every 30 days.</p>
+                    <input type="number" v-model="value.rotationStrategy.days" class="form-control" readonly />
+                </div>
+            </div>
         </div>
 
         <div v-if="value.auth != 'none'" class="form-group">
