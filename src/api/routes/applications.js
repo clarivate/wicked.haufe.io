@@ -92,6 +92,40 @@ applications.patch('/:appId/subscriptions/:apiId', verifySubscriptionsWriteScope
     subscriptions.patchSubscription(req.app, res, applications, req.apiUserId, req.params.appId, req.params.apiId, req.body);
 });
 
+/** 
+ * This endpoint is used to genearte new key for the application.
+ * Only valid for apis subscriptions which have key rotation enabled
+*/
+applications.post('/:appId/subscriptions/:apiId/rotatekey', verifySubscriptionsWriteScope, function (req, res, next) {
+    // Extracting appId and apiId from the request body
+    const appId = req.body.application;
+    const apiId = req.body.api;
+    debug('req.body: ' + JSON.stringify(req.body));
+  
+    // Call the rotatekey function with the extracted appId and apiId
+    subscriptions.rotatekey(req.app, res, appId, apiId, req.apiUserId);
+});
+
+applications.post('/update-key', (req, res) => {
+    const { applicationId, apiId, newApiKey } = req.body;
+    debug('newkey_update'+utils.getText(req.body));
+    debug('key_rotaion appId'+utils.getText(applicationId));
+    debug('key_rotaion apiid'+utils.getText(apiId));
+    debug('key_rotaion newkey'+utils.getText(newApiKey));
+    subscriptions.updateKey(applicationId, apiId, newApiKey, res);
+  });
+  
+  /** 
+ * This endpoint is used to revoke the old key of the application.
+ * Only valid for apis subscriptions which have key rotation enabled
+*/
+  applications.post('/:appId/subscriptions/:apiId/revoke', verifySubscriptionsWriteScope,function (req, res, next) {
+    debug('apiKeyRevoke invoked')
+    const appId = req.params.appId;
+    const apiId = req.params.apiId;
+    subscriptions.revokeOldKey(req.app, res, appId, apiId, req.apiUserId);
+});
+
 // ===== SPECIAL ENDPOINT, THIS IS REGISTERED IN app.js =====
 
 // '/subscriptions/:clientId'

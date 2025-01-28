@@ -13,6 +13,7 @@ const { portal } = require('./portal');
 const MAX_PARALLEL_CALLS = 10;
 const KONG_BATCH_SIZE = 100; // Used when wiping the consumers
 const RATE_LIMITING = 'rate-limiting'
+const ROTATE_KEY='rotate-key';
 
 export const kong = {
     getKongApis: function (callback: Callback<KongApiConfigCollection>): void {
@@ -541,19 +542,33 @@ function enrichConsumerInfo(kongConsumer: KongConsumer, callback: Callback<Consu
     });
 }
 
-function enrichConsumerPlugins(consumerInfo: ConsumerInfo, callback: Callback<ConsumerInfo>): void {
+function shouldIgnoreKeyWithTag(entry) {
+    return entry.tags && entry.tags.includes(ROTATE_KEY); // Ignore if 'tags' includes "rotate key"
+  }
+
+  function enrichConsumerPlugins(consumerInfo: ConsumerInfo, callback: Callback<ConsumerInfo>): void {
     debug('enrichConsumerPlugins()');
     async.each(CONSUMER_PLUGINS, function (pluginName, callback) {
         utils.kongGetConsumerPluginData(consumerInfo.consumer.id, pluginName, function (err, pluginData) {
             if (err)
-                return callback(err);
-            if (pluginData.data.length > 0)
+                 return callback(err);
+
+            if (pluginName === 'key-auth') {
+                pluginData.data = pluginData.data.filter(entry => {
+                    const shouldIgnore = shouldIgnoreKeyWithTag(entry);
+                    debug(`Checking entry for key-auth: ${JSON.stringify(entry)} - Ignored: ${shouldIgnore}`);
+                    return !shouldIgnore;
+                });
+            }
+
+            if (pluginData.data.length > 0) {
                 consumerInfo.plugins[pluginName] = pluginData.data;
+            }
+            
             return callback(null);
         });
     }, function (err) {
-        if (err)
-            return callback(err);
+        if (err) return callback(err);
         return callback(null, consumerInfo);
     });
 }
