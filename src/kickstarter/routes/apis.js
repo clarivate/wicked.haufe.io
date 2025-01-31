@@ -233,6 +233,12 @@ router.post('/:apiId/api', function (req, res, next) {
     const apiId = req.params.apiId;
     const apis = utils.loadApis(req.app);
     body.api.tags = body.api.tags ? body.api.tags.filter(t => !!t) : [];
+    
+    // Check if keyRotationEnabled is false, then delete keyRotationEnabled
+    if (!body.api.keyRotationEnabled) {
+        delete body.api.keyRotationEnabled;
+    }
+
     const apiIndex = apis.apis.findIndex(a => a.id === apiId);
     apis.apis[apiIndex] = body.api;
     utils.saveApis(req.app, apis);
