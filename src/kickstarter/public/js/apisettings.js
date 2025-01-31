@@ -69,6 +69,10 @@ Vue.component('wicked-api', {
             <wicked-checkbox v-if="value.auth !== 'none'" v-model="value.hide_credentials" label="<b>Hide Credentials</b> from upstream server"/>
         </div>
 
+        <div v-if="value.auth === 'key-auth'">
+            <wicked-checkbox v-model="value.keyRotationEnabled" label="<b>Key Rotation Enabled</b>: Enable key rotation" />
+        </div>
+
         <div v-if="value.auth != 'none'" class="form-group">
             <hr>
 
