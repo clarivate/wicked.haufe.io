@@ -7,7 +7,7 @@ const axios = require('axios');
 const { debug, info, warn, error } = require('portal-env').Logger('portal:applications');
 const utils = require('./utils');
 const wicked = require('wicked-sdk');
-const KONG_ADAPTER_URL = 'http://localhost:3002';
+const kong_adapter_url = wicked.getInternalKongAdapterUrl();
 
 const isWosApiInContractedList = (apiId, wosContractedSubscriptions) => {
     return wosContractedSubscriptions.includes(apiId);
@@ -210,7 +210,7 @@ router.get('/', function (req, res, next) {
  * 
  */
 function isKongAdapterAvailable(callback) {
-    axios.get(`${KONG_ADAPTER_URL}/ping`) // Health check URL for kong-adapter
+    axios.get(`${kong_adapter_url}ping`) // Health check URL for kong-adapter
       .then(response => callback(null, response.status === 200))
       .catch(() => callback(null, false));
   }
