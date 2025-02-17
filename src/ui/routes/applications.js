@@ -193,11 +193,23 @@ router.get('/', function (req, res, next) {
         });
     });
 });
+function isKongAdapterAvailable(callback) {
+    const kong_adapter_url = wicked.getInternalKongAdapterUrl();
+    axios.get(`${kong_adapter_url}ping`) // Health check URL for kong-adapter
+      .then(response => callback(null, response.status === 200))
+      .catch(() => callback(null, false));
+  }
 router.post('/:appId/subscriptions/:apiId/rotatekey', function (req, res, next) {
     const appId = req.params.appId;
     const apiId = req.params.apiId;
     debug(`POST /${appId}/subscriptions/${apiId}`);
     debug('rotate-key-ui');
+    isKongAdapterAvailable((err, kongAdapterAvailable) => {
+        debug('checking kong-adapter availability');
+        if (err || !kongAdapterAvailable) {
+          debug('kong-adapter is not available');
+          return utils.fail(503, 'Service Unavailable: kong-adapter is not running', err, next);}
+    
     
     // Initiate the key rotation by sending a POST request to the backend
     utils.post(req, `/applications/${appId}/subscriptions/${apiId}/rotatekey`, {
@@ -253,6 +265,7 @@ router.post('/:appId/subscriptions/:apiId/rotatekey', function (req, res, next) 
       pollForNewApiKey();
     });
   });
+});
 
 
 /**
@@ -264,6 +277,12 @@ router.post('/:appId/subscriptions/:apiId/revoke', function (req, res, next) {
     const appId = req.params.appId;
     const apiId = req.params.apiId;
     debug(`POST /${appId}/subscriptions/${apiId}/revoke`);
+    isKongAdapterAvailable((err, kongAdapterAvailable) => {
+        debug('checking kong-adapter availability');
+        if (err || !kongAdapterAvailable) {
+          debug('kong-adapter is not available');
+          return utils.fail(503, 'Service Unavailable: kong-adapter is not running', err, next);}
+    
 
     // Initiate the key revocation by sending a POST request to the backend
     utils.post(req, `/applications/${appId}/subscriptions/${apiId}/revoke`, {
@@ -281,6 +300,7 @@ router.post('/:appId/subscriptions/:apiId/revoke', function (req, res, next) {
         res.redirect(`/applications/${appId}`);
       }, 1000);
     });
+});
 });
 
 function findUserRole(appInfo, userInfo) {
