@@ -20,14 +20,28 @@ router.get('/:appId', function (req, res, next) {
         },
         getSubscriptions: function (callback) {
             utils.getFromAsync(req, res, '/applications/' + appId + '/subscriptions', 200, callback);
-        }
+        },
+        getApis: function (callback) {
+            utils.getFromAsync(req, res, '/apis', 200, callback);
+          }
     }, function (err, results) {
         if (err)
             return next(err);
         const application = results.getApplication;
         const roles = results.getRoles;
         const appSubs = results.getSubscriptions;
-
+        const apiList = results.getApis.apis;
+        const keyRotationEnabledApis = [];
+        for (let i = 0; i < apiList.length; ++i) {
+          if (apiList[i].keyRotationEnabled) {
+            debug(`API ${apiList[i].id} has keyRotationEnabled set to true`);
+            keyRotationEnabledApis.push(apiList[i]);
+          }
+            }
+        const filteredKeyRotationEnabledApis = keyRotationEnabledApis.filter(api => {
+              return appSubs.some(sub => sub.api === api.id);
+          });
+        debug('filteredKeyRotationEnabledApis:'+JSON.stringify(filteredKeyRotationEnabledApis));
         debug(appSubs);
 
         if (!utils.acceptJson(req)) {
@@ -38,7 +52,8 @@ router.get('/:appId', function (req, res, next) {
                 route: '/applications/' + appId,
                 application: application,
                 roles: roles,
-                subscriptions: appSubs
+                subscriptions: appSubs,
+                keyRotationEnabledApis: filteredKeyRotationEnabledApis
             });
         } else {
             res.json({
@@ -177,6 +192,115 @@ router.get('/', function (req, res, next) {
             }
         });
     });
+});
+function isKongAdapterAvailable(callback) {
+    const kong_adapter_url = wicked.getInternalKongAdapterUrl();
+    axios.get(`${kong_adapter_url}ping`) // Health check URL for kong-adapter
+      .then(response => callback(null, response.status === 200))
+      .catch(() => callback(null, false));
+  }
+router.post('/:appId/subscriptions/:apiId/rotatekey', function (req, res, next) {
+    const appId = req.params.appId;
+    const apiId = req.params.apiId;
+    debug(`POST /${appId}/subscriptions/${apiId}`);
+    debug('rotate-key-ui');
+    isKongAdapterAvailable((err, kongAdapterAvailable) => {
+        debug('checking kong-adapter availability');
+        if (err || !kongAdapterAvailable) {
+          debug('kong-adapter is not available');
+          return utils.fail(503, 'Service Unavailable: kong-adapter is not running', err, next);}
+    
+    
+    // Initiate the key rotation by sending a POST request to the backend
+    utils.post(req, `/applications/${appId}/subscriptions/${apiId}/rotatekey`, {
+      application: appId,
+      api: apiId
+    }, function (err, apiRes, apiBody) {
+      if (err) {
+        debug('Error during request:', err);
+        return next(err);
+      }
+  
+      debug('Response status: ' + apiRes.statusCode);
+      debug('Full Response: ' + JSON.stringify(apiRes, null, 2));
+  
+      // Polling function to repeatedly check for the updated subscription data
+      const pollForNewApiKey = (retryCount = 0) => {
+        const maxRetries = 5;  // Maximum number of retries
+        const delay = 1000;    // Delay between retries in milliseconds
+  
+        // Send a GET request to check if the new API key is available
+        utils.getFromAsync(req, res, `/applications/${appId}/subscriptions/${apiId}`, 200, function (err, subsInfo) {
+          if (err) return next(err);
+  
+          // Check if newApiKey is available in the response
+          if (subsInfo.newApiKey) {
+            debug('Updated subscription info:');
+            debug(JSON.stringify(subsInfo));
+  
+            // Send the updated subscription info in the response
+            return res.json({
+              subscription: {
+                apiKey: subsInfo.apikey,
+                newApiKey: subsInfo.newApiKey
+              }
+            });
+          }
+  
+          // If newApiKey is still not available, retry if maxRetries is not reached
+          if (retryCount < maxRetries) {
+            debug(`newApiKey not available yet. Retrying... (${retryCount + 1}/${maxRetries})`);
+            setTimeout(() => pollForNewApiKey(retryCount + 1), delay);
+          } else {
+            // If max retries reached, send an error response
+            debug('Max retries reached. newApiKey not found.');
+            return res.status(408).json({
+              error: 'newApiKey not available. Please try again later.'
+            });
+          }
+        });
+      };
+  
+      // Start polling
+      pollForNewApiKey();
+    });
+  });
+});
+
+
+/**
+ * This route handler revokes the API key for a given application subscription.
+ * This functionality is only enabled for APIs with key rotation enabled.
+ * 
+ */
+router.post('/:appId/subscriptions/:apiId/revoke', function (req, res, next) {
+    const appId = req.params.appId;
+    const apiId = req.params.apiId;
+    debug(`POST /${appId}/subscriptions/${apiId}/revoke`);
+    isKongAdapterAvailable((err, kongAdapterAvailable) => {
+        debug('checking kong-adapter availability');
+        if (err || !kongAdapterAvailable) {
+          debug('kong-adapter is not available');
+          return utils.fail(503, 'Service Unavailable: kong-adapter is not running', err, next);}
+    
+
+    // Initiate the key revocation by sending a POST request to the backend
+    utils.post(req, `/applications/${appId}/subscriptions/${apiId}/revoke`, {
+      application: appId,  // Only sending appId
+      api: apiId           // Only sending apiId
+    }, function (err, apiRes, apiBody) {
+      if (err) {
+        debug('Error during request:', err);
+        return next(err);
+      }
+
+      debug('Response status: ' + apiRes.statusCode);
+      debug('Full Response: ' + JSON.stringify(apiRes, null, 2));
+      setTimeout(() => {
+        res.redirect(`/applications/${appId}`);
+      }, 1000);
+    });
+});
 });
 
 function findUserRole(appInfo, userInfo) {

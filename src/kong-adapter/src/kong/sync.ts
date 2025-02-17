@@ -199,8 +199,145 @@ export const sync = {
             error(JSON.stringify(globalPlugins, null, 2));
             return callback(new Error('Detected multiple global prometheus plugins.'));
         });
-    }
-};
+    },
+    handleKeyRotation: async function (applicationId, apiId, callback) {
+        const consumerUsername = utils.makeUserName(applicationId, apiId);
+        const kongAdminUrl = utils.getKongUrl();
+  
+        async function postKeyDetails(newApiKey, apiId, applicationId, retryCount = 0) {
+          const apiUrl = wicked.getInternalApiUrl();
+          const apiEndpoint = `${apiUrl}applications/update-key`;
+          try {
+            const response = await axios.post(apiEndpoint, { newApiKey, apiId, applicationId });
+            if (response.status === 200) {
+              debug('API details posted successfully:', response.data);
+              callback(null, { newApiKey, apiId, applicationId });
+            } else if (retryCount < 3) {
+              debug(`Retrying posting API details, attempt ${retryCount + 1}`);
+              await postKeyDetails(newApiKey, apiId, applicationId, retryCount + 1);
+            } else {
+              callback(new Error(`Failed to post API details: ${response.statusText}, Status Code: ${response.status}`));
+            }
+          } catch (err) {
+            if (retryCount < 3) {
+              debug(`Retrying posting API details, attempt ${retryCount + 1}`);
+              await postKeyDetails(newApiKey, apiId, applicationId, retryCount + 1);
+            } else {
+              callback(err);
+            }
+          }
+        }
+        async function generateNewKey(retryCount = 0) {
+          try {
+            const consumer = await new Promise((resolve, reject) => {
+              utils.kongGetConsumerByName(consumerUsername, (err, consumer) => {
+                if (err) return reject(err);
+                resolve(consumer);
+              });
+            });
+            if (consumer) {
+              try {
+                const response = await axios.post(`${kongAdminUrl}consumers/${consumerUsername}/key-auth`, { tags: ["rotate-key"] });
+                if (response.status === 201) {
+                  const newApiKey = response.data.key;
+                  debug(`New key generated for consumer: ${consumerUsername}`);
+                  await postKeyDetails(newApiKey, apiId, applicationId);
+                } else if (retryCount < 3) {
+                  debug(`Retrying key generation for consumer: ${consumerUsername}, attempt ${retryCount + 1}`);
+                  await generateNewKey(retryCount + 1);
+                } else {
+                  callback(new Error('Failed to generate new key after multiple attempts.'));
+                }
+              } catch (err) {
+                if (retryCount < 3) {
+                  debug(`Retrying key generation for consumer: ${consumerUsername}, attempt ${retryCount + 1}`);
+                  await generateNewKey(retryCount + 1);
+                } else {
+                  callback(err);
+                }
+              }
+            } else {
+              callback(new Error("Consumer does not exist"));
+            }
+          } catch (error) {
+            callback(error);
+          }
+        }
+  
+        await generateNewKey();
+      },
+      handleKeyRevoke: async function (applicationId, apiId, apikey, callback) {
+        const consumerUsername = utils.makeUserName(applicationId, apiId);
+        const kongAdminUrl = utils.getKongUrl();
+  
+        async function removeRotateKeyTag(retryCount = 0) {
+          try {
+            const response = await axios.get(`${kongAdminUrl}consumers/${consumerUsername}/key-auth`);
+            const keys = response.data.data;
+            const rotateKey = keys.find(key => key.tags && key.tags.includes("rotate-key"));
+            if (rotateKey) {
+              try {
+                await axios.patch(`${kongAdminUrl}consumers/${consumerUsername}/key-auth/${rotateKey.id}`, {
+                  tags: rotateKey.tags.filter(tag => tag !== "rotate-key")
+                });
+                debug(`rotate-key tag removed from key: ${rotateKey.key}`);
+                proceedWithKeyRevocation();
+              } catch (err) {
+                if (retryCount < 3) {
+                  debug(`Retrying removing rotate-key tag, attempt ${retryCount + 1}`);
+                  await removeRotateKeyTag(retryCount + 1);
+                } else {
+                  callback(err);
+                }
+              }
+            } else {
+              proceedWithKeyRevocation();
+            }
+          } catch (err) {
+            if (retryCount < 3) {
+              debug(`Retrying fetching keys, attempt ${retryCount + 1}`);
+              await removeRotateKeyTag(retryCount + 1);
+            } else {
+              callback(err);
+            }
+          }
+        }
+  
+        async function proceedWithKeyRevocation(retryCount = 0) {
+          try {
+            const response = await axios.delete(`${kongAdminUrl}consumers/${consumerUsername}/key-auth/${apikey}`);
+            if (response.status === 204) {
+              debug(`Key revoked for consumer: ${consumerUsername}`);
+              callback(null, { apikey, apiId, applicationId });
+            } else if (retryCount < 3) {
+              debug(`Retrying key revocation, attempt ${retryCount + 1}`);
+              await proceedWithKeyRevocation(retryCount + 1);
+            } else {
+              callback(new Error('Failed to revoke key.'));
+            }
+          } catch (err) {
+            if (retryCount < 3) {
+              debug(`Retrying key revocation, attempt ${retryCount + 1}`);
+              await proceedWithKeyRevocation(retryCount + 1);
+            } else {
+              callback(err);
+            }
+          }
+        }
+  
+        utils.kongGetConsumerByName(consumerUsername, function (error, consumer) {
+          if (error) {
+            return callback(error);
+          }
+          if (consumer) {
+            debug(`Consumer ${consumerUsername} exists, fetching keys.`);
+            removeRotateKeyTag();
+          } else {
+            callback(new Error("Consumer does not exist"));
+          }
+        });
+      }
+    };
 
 function syncAppConsumers(portalConsumers: ConsumerInfo[], callback: ErrorCallback): void {
     if (portalConsumers.length === 0) {

@@ -16,6 +16,8 @@ const SUBSCRIPTION = 'subscription'
 const ACTION_ADD ='add'
 const ACTION_DELETE = 'delete'
 const ACTION_UPDATE = 'update'
+const KEY_ROTATION='key_rotation';
+const REVOKE_OLD_KEY='revoke_old_key';
 
 // ====== PUBLIC INTERFACE ======
 
@@ -180,6 +182,13 @@ function dispatchWebhookAction(webhookData, onlyDelete, callback) {
         syncAction = callback => syncAppConsumers(webhookData.data.applicationId, callback);
     else if (entity === SUBSCRIPTION && action === ACTION_DELETE)
         syncAction = callback => deleteAppSubscriptionConsumer(webhookData.data, callback);
+    else if (entity === SUBSCRIPTION && action === KEY_ROTATION && !onlyDelete) {
+        syncAction = callback => handleKeyRotation(webhookData.data.applicationId, webhookData.data.apiId, callback);
+        debug('handle_key_rotation' + utils.getText(webhookData.data.applicationId));
+    }else if (entity === SUBSCRIPTION && action === REVOKE_OLD_KEY && !onlyDelete) {
+        syncAction = callback => handleKeyRevoke(webhookData.data.applicationId, webhookData.data.apiId,webhookData.data.apiKey, callback);
+        debug('revoke_old_key' + utils.getText(webhookData.data.applicationId));
+    }
     else
         debug(`Discarding event ${action} ${entity}.`)
 
@@ -245,6 +254,23 @@ function acknowledgeEvent(eventId, callback) {
         debug('deleteWebhookEvent returned');
         callback(null);
     });
+}
+/**
+ * Handles the key rotation for a given application and API.
+ * 
+ * @param {string} appId - The ID of the application.
+ * @param {string} apiId - The ID of the API.
+ * @param {Function} callback - The callback function to be called after handling the key rotation.
+ */
+function handleKeyRotation(appId, apiId, callback) {
+    info(`Key rotation for app ${appId} and api ${apiId}`);
+    // Relay to sync
+    sync.handleKeyRotation(appId, apiId, callback);
+}
+
+function handleKeyRevoke(appId, apiId, apikey,callback) {
+    info(`Key revoke for app ${appId} and api ${apiId}`);
+    sync.handleKeyRevoke(appId, apiId, apikey,callback);
 }
 
 // ====== INTERNALS =======

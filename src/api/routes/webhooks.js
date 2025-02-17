@@ -74,6 +74,8 @@ webhooks.ENTITY_VERIFICATION_EMAIL = 'verification_email';
 // for deploy.js
 webhooks.ENTITY_EXPORT = 'export';
 webhooks.ENTITY_IMPORT = 'import';
+webhooks.KEY_ROTATION='key_rotation';
+webhooks.REVOKE_OLD_KEY='revoke_old_key';
 
 // ===== IMPLEMENTATION =====
 
