@@ -196,7 +196,7 @@ router.get('/', function (req, res, next) {
 });
 function isKongAdapterAvailable(callback) {
     const kong_adapter_url = wicked.getInternalKongAdapterUrl();
-    axios.get(`${kong_adapter_url}ping`) // Health check URL for kong-adapter
+    axios.get(`${kong_adapter_url}ping`) 
       .then(response => callback(null, response.status === 200))
       .catch(() => callback(null, false));
   }
