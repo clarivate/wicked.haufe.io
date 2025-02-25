@@ -6,6 +6,7 @@ const async = require('async');
 const { debug, info, warn, error } = require('portal-env').Logger('portal:applications');
 const utils = require('./utils');
 const wicked = require('wicked-sdk');
+const axios = require('axios');
 
 router.get('/:appId', function (req, res, next) {
     debug("get('/:appId')");
