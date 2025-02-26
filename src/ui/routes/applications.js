@@ -6,6 +6,7 @@ const async = require('async');
 const { debug, info, warn, error } = require('portal-env').Logger('portal:applications');
 const utils = require('./utils');
 const wicked = require('wicked-sdk');
+const axios = require('axios');
 
 router.get('/:appId', function (req, res, next) {
     debug("get('/:appId')");
@@ -195,7 +196,7 @@ router.get('/', function (req, res, next) {
 });
 function isKongAdapterAvailable(callback) {
     const kong_adapter_url = wicked.getInternalKongAdapterUrl();
-    axios.get(`${kong_adapter_url}ping`) // Health check URL for kong-adapter
+    axios.get(`${kong_adapter_url}ping`) 
       .then(response => callback(null, response.status === 200))
       .catch(() => callback(null, false));
   }
@@ -223,13 +224,11 @@ router.post('/:appId/subscriptions/:apiId/rotatekey', function (req, res, next) 
   
       debug('Response status: ' + apiRes.statusCode);
       debug('Full Response: ' + JSON.stringify(apiRes, null, 2));
-  
-      // Polling function to repeatedly check for the updated subscription data
+
       const pollForNewApiKey = (retryCount = 0) => {
-        const maxRetries = 5;  // Maximum number of retries
-        const delay = 1000;    // Delay between retries in milliseconds
-  
-        // Send a GET request to check if the new API key is available
+        const maxRetries = 5; 
+        const delay = 1000;   
+
         utils.getFromAsync(req, res, `/applications/${appId}/subscriptions/${apiId}`, 200, function (err, subsInfo) {
           if (err) return next(err);
   
@@ -246,13 +245,11 @@ router.post('/:appId/subscriptions/:apiId/rotatekey', function (req, res, next) 
               }
             });
           }
-  
-          // If newApiKey is still not available, retry if maxRetries is not reached
+
           if (retryCount < maxRetries) {
             debug(`newApiKey not available yet. Retrying... (${retryCount + 1}/${maxRetries})`);
             setTimeout(() => pollForNewApiKey(retryCount + 1), delay);
-          } else {
-            // If max retries reached, send an error response
+          } else { 
             debug('Max retries reached. newApiKey not found.');
             return res.status(408).json({
               error: 'newApiKey not available. Please try again later.'
@@ -260,8 +257,7 @@ router.post('/:appId/subscriptions/:apiId/rotatekey', function (req, res, next) 
           }
         });
       };
-  
-      // Start polling
+
       pollForNewApiKey();
     });
   });
@@ -286,8 +282,8 @@ router.post('/:appId/subscriptions/:apiId/revoke', function (req, res, next) {
 
     // Initiate the key revocation by sending a POST request to the backend
     utils.post(req, `/applications/${appId}/subscriptions/${apiId}/revoke`, {
-      application: appId,  // Only sending appId
-      api: apiId           // Only sending apiId
+      application: appId, 
+      api: apiId           
     }, function (err, apiRes, apiBody) {
       if (err) {
         debug('Error during request:', err);

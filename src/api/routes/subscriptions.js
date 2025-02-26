@@ -190,8 +190,7 @@ subscriptions.rotatekey = function (app, res, appId, apiId, loggedInUserId) {
             userId: loggedInUserId
           }
         });
-  
-        // Send a success status code
+   
         res.sendStatus(200);
       });
     });

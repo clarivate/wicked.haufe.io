@@ -24,14 +24,14 @@ block scripts
         }
 
          function showPopup2Modal(index) {
-            $('#loadingMessage').hide(); // Hide the loading message
+            $('#loadingMessage').hide(); 
             $(`#Popup1Modal-${index}`).modal('hide');
             $(`#Popup2Modal-${index}`).modal('show');
         }
 
         function OkPopup2Modal(index) {
             $(`#Popup2Modal-${index}`).modal('hide');
-            location.reload(); // Reload the page after closing the modal
+            location.reload(); 
         }
 
         function showExpireKeyModal(index) {
@@ -54,11 +54,11 @@ block scripts
                     // Handle form submission for rotating the key
             document.querySelectorAll('.rotate-key-form').forEach(form => {
                 form.addEventListener('submit', function(event) {
-                    event.preventDefault(); // Prevent default form submission
+                    event.preventDefault(); 
                     const formData = new FormData(this);
                     const index = this.getAttribute('data-index');
 
-                    $('#loadingMessage').show(); // Show the loading message
+                    $('#loadingMessage').show(); 
 
                     fetch(this.action, {
                         method: 'POST',
@@ -81,12 +81,12 @@ block scripts
                             showPopup2Modal(index);
                         } else {
                             alert('Key rotation failed');
-                            $('#loadingMessage').hide(); // Hide the loading message if rotation fails
+                            $('#loadingMessage').hide(); 
                         }
                     })
                     .catch(error => {
                         console.error('Error:', error);
-                        $('#loadingMessage').hide(); // Hide the loading message if there is an error
+                        $('#loadingMessage').hide(); 
                     });
                 });
             });
@@ -94,7 +94,7 @@ block scripts
             // Handle form submission for expiring the key
             document.querySelectorAll('.expire-key-form').forEach(form => {
                 form.addEventListener('submit', function(event) {
-                    event.preventDefault(); // Prevent default form submission
+                    event.preventDefault(); 
                     const formData = new FormData(this);
 
                     fetch(this.action, {
@@ -107,7 +107,7 @@ block scripts
                     })
                     .then(response => {
                         if (response.ok) {
-                            location.reload(); // Reload the page after successful expiration
+                            location.reload(); 
                         } else {
                             throw new Error('Network response was not ok');
                         }
@@ -124,7 +124,7 @@ block scripts
 
         function OkPopup2Modal(index) {
             $(`#Popup2Modal-${index}`).modal('hide');
-            location.reload(); // Reload the page after closing the modal
+            location.reload(); 
         }
         
 block content
