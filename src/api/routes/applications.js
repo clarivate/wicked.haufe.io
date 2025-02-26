@@ -97,12 +97,11 @@ applications.patch('/:appId/subscriptions/:apiId', verifySubscriptionsWriteScope
  * Only valid for apis subscriptions which have key rotation enabled
 */
 applications.post('/:appId/subscriptions/:apiId/rotatekey', verifySubscriptionsWriteScope, function (req, res, next) {
-    // Extracting appId and apiId from the request body
+
     const appId = req.body.application;
     const apiId = req.body.api;
     debug('req.body: ' + JSON.stringify(req.body));
-  
-    // Call the rotatekey function with the extracted appId and apiId
+
     subscriptions.rotatekey(req.app, res, appId, apiId, req.apiUserId);
 });
 
