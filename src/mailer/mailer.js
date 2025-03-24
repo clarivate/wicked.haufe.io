@@ -8,8 +8,10 @@ const mustache = require('mustache');
 const wicked = require('wicked-sdk');
 
 const utils = require('./utils');
+const AWS = require('aws-sdk');
 
 const mailer = function () { };
+const ses = new AWS.SES({ region: 'us-west-2' });
 
 mailer.smtpTransporter = null;
 
@@ -173,17 +175,28 @@ mailer.handleEvent = function (app, event, done) {
                     text: text
                 };
                 debug(email);
-
-                mailer.smtpTransporter.sendMail(email, function (emailErr, emailResponse) {
-                    if (emailErr) {
-                        // Check the type of error...
-                        // https://www.greenend.org.uk/rjk/tech/smtpreplies.html
-                        switch (emailErr.responseCode) {
-                            case 500:
-                            case 501: // e.g. email address invalid
-                                error(`Could not send email, discarding email to ${to}.`);
-                                return done(null, emailResponse);
+                const params = {
+                    Source: from,
+                    Destination: {
+                        ToAddresses: [to]
+                    },
+                    Message: {
+                        Subject: {
+                            Data: subject,
+                            Charset: 'UTF-8'
+                        },
+                        Body: {
+                            Text: {
+                                Data: text,
+                                Charset: 'UTF-8'
+                            }
                         }
+                    }
+                };
+
+                ses.sendEmail(params, function (emailErr, emailResponse) {
+                    if (emailErr) {
+                        error(`Could not send email, discarding email to ${to}.`);
                         return done(emailErr);
                     }
                     info("Sent email to " + to + ".");
