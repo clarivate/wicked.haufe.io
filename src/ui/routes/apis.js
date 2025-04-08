@@ -148,12 +148,7 @@ router.get('/:api', function (req, res, next) {
         getSwaggerExsists: callback => {
             utils.getFromAsync(req, res, '/apis/' + apiId + '/swagger', 200, (err, result) => {
                 if (err) {
-                    // Add debug statement to log the error and its status code
-                    debug(`Error occurred while fetching Swagger for API: ${apiId}`);
-                    debug(`Error details: ${err.message}`);
-                    debug(`Error details: ${err}`);
                     if (err.status === 404) {
-                        debug(`Swagger not found for API: ${apiId}`);
                         return callback(null, false); // Set to false if 404
                     }
                 }
