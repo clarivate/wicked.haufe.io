@@ -145,6 +145,22 @@ router.get('/:api', function (req, res, next) {
 
     async.parallel({
         getApi: callback => utils.getFromAsync(req, res, '/apis/' + apiId, 200, callback),
+        getSwaggerExsists: callback => {
+            utils.getFromAsync(req, res, '/apis/' + apiId + '/swagger', 200, (err, result) => {
+                if (err) {
+                    // Add debug statement to log the error and its status code
+                    debug(`Error occurred while fetching Swagger for API: ${apiId}`);
+                    debug(`Error details: ${err.message}`);
+                    debug(`Error details: ${err}`);
+                    if (err.status === 404) {
+                        debug(`Swagger not found for API: ${apiId}`);
+                        return callback(null, false); // Set to false if 404
+                    }
+                }
+                // Otherwise, set apiSwaggerExsists to true
+                callback(null, true);
+            });
+        },
         getApiDesc: callback => utils.getFromAsync(req, res, '/apis/' + apiId + '/desc', 200, callback),
         getSubscriptions: function (callback) {
             if (loggedInUserId && req.user && req.user.admin) // Don't try if we don't think the user is an admin
