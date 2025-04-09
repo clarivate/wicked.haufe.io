@@ -145,17 +145,6 @@ router.get('/:api', function (req, res, next) {
 
     async.parallel({
         getApi: callback => utils.getFromAsync(req, res, '/apis/' + apiId, 200, callback),
-        getSwaggerExsists: callback => {
-            utils.getFromAsync(req, res, '/apis/' + apiId + '/swagger', 200, (err, result) => {
-                if (err) {
-                    if (err.status === 404) {
-                        return callback(null, false); // Set to false if 404
-                    }
-                }
-                // Otherwise, set apiSwaggerExsists to true
-                callback(null, true);
-            });
-        },
         getApiDesc: callback => utils.getFromAsync(req, res, '/apis/' + apiId + '/desc', 200, callback),
         getSubscriptions: function (callback) {
             if (loggedInUserId && req.user && req.user.admin) // Don't try if we don't think the user is an admin
@@ -179,7 +168,7 @@ router.get('/:api', function (req, res, next) {
         if (err)
             return next(err);
         const apiInfo = results.getApi;
-        const apiSwaggerExsist = !(apiInfo.excludeSwagger === true || results.getSwaggerExsists === false);
+        const apiSwaggerExsist = !(apiInfo.excludeSwagger === true);
 
         if (apiInfo.desc)
             apiInfo.desc = marked(apiInfo.desc, markedOptions);

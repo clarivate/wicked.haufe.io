@@ -147,7 +147,7 @@ block content
                     - var apiIDs = apiData.map(obj => Object.values(obj))
                     
                     p#cortellisIdElement= apiIDs
-                    if apiSwaggerExsist
+                    if apiSwaggerExsists
                         if (apiIDs.some(innerArray => innerArray.includes(apiInfo.id))) 
                             if CortellisApiKey !== null
                                 if apiInfo.auth == "key-auth" && authUser && authUser.authenticated_scope.includes('wicked:api-cortellis-user') || authUser && authUser.admin && authUser.authenticated_scope.includes('wicked:api-cortellis-user') || authUser && authUser.superadmin && authUser.authenticated_scope.includes('wicked:api-cortellis-user')
@@ -219,7 +219,7 @@ block content
                                     else
                                         th n/a
                                     th Action
-                                    if apiSwaggerExsist
+                                    if apiSwaggerExsists
                                         th Try it!
                             tbody
                                 for app in applications
@@ -269,7 +269,7 @@ block content
                                         else
                                             td &nbsp;
                                         // Try it!
-                                        if apiSwaggerExsist
+                                        if apiSwaggerExsists
                                             if app.hasSubscription && app.subscriptionApproved
                                                 td
                                                     if apiInfo.auth == "key-auth"
