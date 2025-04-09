@@ -147,21 +147,23 @@ block content
                     - var apiIDs = apiData.map(obj => Object.values(obj))
                     
                     p#cortellisIdElement= apiIDs
-                    if (apiIDs.some(innerArray => innerArray.includes(apiInfo.id))) 
-                        if CortellisApiKey !== null
-                            if apiInfo.auth == "key-auth" && authUser && authUser.authenticated_scope.includes('wicked:api-cortellis-user') || authUser && authUser.admin && authUser.authenticated_scope.includes('wicked:api-cortellis-user') || authUser && authUser.superadmin && authUser.authenticated_scope.includes('wicked:api-cortellis-user')
-                                a(href=`${glob.network.schema}://${glob.network.apiHost}/swagger-ui/?apikey=${CortellisApiKey}&url=${encodeURIComponent(genericSwaggerUrl)}` role="button" target="_blank").btn.btn-default View Technical Documentation/ Swagger Definition &raquo;
-                        else 
-                            if apiInfo.auth == "key-auth" && authUser && authUser.authenticated_scope.includes('wicked:api-cortellis-user') || authUser && authUser.admin && authUser.authenticated_scope.includes('wicked:api-cortellis-user') || authUser && authUser.superadmin && authUser.authenticated_scope.includes('wicked:api-cortellis-user')
-                                a(href=`${glob.network.schema}://${glob.network.apiHost}/swagger-ui/?url=${encodeURIComponent(genericSwaggerUrl)}` role="button" target="_blank").btn.btn-default View Technical Documentation/ Swagger Definition &raquo;
-                            else if apiInfo.auth == "none" && authUser && authUser.authenticated_scope.includes('wicked:api-cortellis-user') || authUser && authUser.admin && authUser.authenticated_scope.includes('wicked:api-cortellis-user') || authUser && authUser.superadmin && authUser.authenticated_scope.includes('wicked:api-cortellis-user')
-                                a(href=`${glob.network.schema}://${glob.network.apiHost}/swagger-ui/?url=${encodeURIComponent(genericSwaggerUrl)}` role="button" target="_blank").btn.btn-default View Technical Documentation/ Swagger Definition &raquo;
-                                
-                    else if !authUser || (apiInfo.auth == "none") && (authUser && !authUser.authenticated_scope.includes('wicked:api-cortellis-user') || authUser.authenticated_scope.includes('wicked:api-cortellis-user'))
-                        a(href=`${glob.network.schema}://${glob.network.apiHost}/swagger-ui/?apikey=none&url=${encodeURIComponent(genericSwaggerUrl)}` role="button" target="_blank").btn.btn-default View Technical Documentation/ Swagger Definition &raquo;
+                    if apiSwaggerExsists
+                        if (apiIDs.some(innerArray => innerArray.includes(apiInfo.id))) 
+                            if CortellisApiKey !== null
+                                if apiInfo.auth == "key-auth" && authUser && authUser.authenticated_scope.includes('wicked:api-cortellis-user') || authUser && authUser.admin && authUser.authenticated_scope.includes('wicked:api-cortellis-user') || authUser && authUser.superadmin && authUser.authenticated_scope.includes('wicked:api-cortellis-user')
+                                    a(href=`${glob.network.schema}://${glob.network.apiHost}/swagger-ui/?apikey=${CortellisApiKey}&url=${encodeURIComponent(genericSwaggerUrl)}` role="button" target="_blank").btn.btn-default View Technical Documentation/ Swagger Definition &raquo;
+                            else 
+                                if apiInfo.auth == "key-auth" && authUser && authUser.authenticated_scope.includes('wicked:api-cortellis-user') || authUser && authUser.admin && authUser.authenticated_scope.includes('wicked:api-cortellis-user') || authUser && authUser.superadmin && authUser.authenticated_scope.includes('wicked:api-cortellis-user')
+                                    a(href=`${glob.network.schema}://${glob.network.apiHost}/swagger-ui/?url=${encodeURIComponent(genericSwaggerUrl)}` role="button" target="_blank").btn.btn-default View Technical Documentation/ Swagger Definition &raquo;
+                                else if apiInfo.auth == "none" && authUser && authUser.authenticated_scope.includes('wicked:api-cortellis-user') || authUser && authUser.admin && authUser.authenticated_scope.includes('wicked:api-cortellis-user') || authUser && authUser.superadmin && authUser.authenticated_scope.includes('wicked:api-cortellis-user')
+                                    a(href=`${glob.network.schema}://${glob.network.apiHost}/swagger-ui/?url=${encodeURIComponent(genericSwaggerUrl)}` role="button" target="_blank").btn.btn-default View Technical Documentation/ Swagger Definition &raquo;
+                                    
+                        else if !authUser || (apiInfo.auth == "none") && (authUser && !authUser.authenticated_scope.includes('wicked:api-cortellis-user') || authUser.authenticated_scope.includes('wicked:api-cortellis-user'))
+                            a(href=`${glob.network.schema}://${glob.network.apiHost}/swagger-ui/?apikey=none&url=${encodeURIComponent(genericSwaggerUrl)}` role="button" target="_blank").btn.btn-default View Technical Documentation/ Swagger Definition &raquo;
+                        else
+                            a(href=`${glob.network.schema}://${glob.network.apiHost}/swagger-ui/?url=${encodeURIComponent(genericSwaggerUrl)}` role="button" target="_blank").btn.btn-default View Technical Documentation/ Swagger Definition &raquo;
                     else
-                        a(href=`${glob.network.schema}://${glob.network.apiHost}/swagger-ui/?url=${encodeURIComponent(genericSwaggerUrl)}` role="button" target="_blank").btn.btn-default View Technical Documentation/ Swagger Definition &raquo;
-        
+                        span(style="display:none") Swagger not available
         if !authUser && apiInfo.auth != "none"
             .panel.panel-danger.custom-hide
                 .panel-heading
@@ -217,7 +219,8 @@ block content
                                     else
                                         th n/a
                                     th Action
-                                    th Try it!
+                                    if apiSwaggerExsists
+                                        th Try it!
                             tbody
                                 for app in applications
                                     tr
@@ -266,20 +269,21 @@ block content
                                         else
                                             td &nbsp;
                                         // Try it!
-                                        if app.hasSubscription && app.subscriptionApproved
-                                            td
-                                                if apiInfo.auth == "key-auth"
-                                                    a(href=`${glob.network.schema}://${glob.network.apiHost}/swagger-ui/?apikey=${app.apiKey}&url=${app.swaggerLink}` target='_blank').btn.btn-default Try it!
-                                                else if apiInfo.auth == "oauth2" && app.redirectUri && app.redirectUri.indexOf("swagger-ui/oauth2-redirect.html") > 0
-                                                    a(href=`${glob.network.schema}://${glob.network.apiHost}/swagger-ui/?client_id=${app.clientId}&client_secret=${app.clientSecret}&url=${app.swaggerLink}&application=${app.id}&redirect_uri=${app.redirectUri}` target='_blank').btn.btn-default Try it!
-                                                else if apiInfo.auth == "oauth2" && directAuth
-                                                    a(href=`${glob.network.schema}://${glob.network.apiHost}/swagger-ui/?client_id=${app.clientId}&client_secret=${app.clientSecret}&url=${app.swaggerLink}&application=${app.id}` target='_blank').btn.btn-default Try it!
-                                                else if apiInfo.auth == "oauth2" && redirectAuth && !apiInfo.hasSwaggerApplication
-                                                    a(href='/applications?register=true&swagger=true').btn.btn-default Swagger UI setup!
-                                                else
-                                                    | ---
-                                        else
-                                            td(style='vertical-align:middle;') ---
+                                        if apiSwaggerExsists
+                                            if app.hasSubscription && app.subscriptionApproved
+                                                td
+                                                    if apiInfo.auth == "key-auth"
+                                                        a(href=`${glob.network.schema}://${glob.network.apiHost}/swagger-ui/?apikey=${app.apiKey}&url=${app.swaggerLink}` target='_blank').btn.btn-default Try it!
+                                                    else if apiInfo.auth == "oauth2" && app.redirectUri && app.redirectUri.indexOf("swagger-ui/oauth2-redirect.html") > 0
+                                                        a(href=`${glob.network.schema}://${glob.network.apiHost}/swagger-ui/?client_id=${app.clientId}&client_secret=${app.clientSecret}&url=${app.swaggerLink}&application=${app.id}&redirect_uri=${app.redirectUri}` target='_blank').btn.btn-default Try it!
+                                                    else if apiInfo.auth == "oauth2" && directAuth
+                                                        a(href=`${glob.network.schema}://${glob.network.apiHost}/swagger-ui/?client_id=${app.clientId}&client_secret=${app.clientSecret}&url=${app.swaggerLink}&application=${app.id}` target='_blank').btn.btn-default Try it!
+                                                    else if apiInfo.auth == "oauth2" && redirectAuth && !apiInfo.hasSwaggerApplication
+                                                        a(href='/applications?register=true&swagger=true').btn.btn-default Swagger UI setup!
+                                                    else
+                                                        | ---
+                                            else
+                                                td(style='vertical-align:middle;') ---
 
 
                     p Need an additional application? Click the button below.

@@ -168,6 +168,8 @@ router.get('/:api', function (req, res, next) {
         if (err)
             return next(err);
         const apiInfo = results.getApi;
+        const apiSwaggerExsist = !(apiInfo.excludeSwagger === true);
+
         if (apiInfo.desc)
             apiInfo.desc = marked(apiInfo.desc, markedOptions);
         let apiDesc = results.getApiDesc;
@@ -397,6 +399,7 @@ router.get('/:api', function (req, res, next) {
                         skusData: null, // Assuming skusData should be null in this case
                         userInfo: userInfo,
                         apiSubscriptions: apiSubscriptions,
+                        apiSwaggerExsists: apiSwaggerExsist,
                         genericSwaggerUrl: genericSwaggerUrl,
                         partnerOnly: partnerOnly
                     });
@@ -455,6 +458,7 @@ router.get('/:api', function (req, res, next) {
                             skusData: responseData,
                             userInfo: userInfo,
                             apiSubscriptions: apiSubscriptions,
+                            apiSwaggerExsists: apiSwaggerExsist,
                             genericSwaggerUrl: genericSwaggerUrl,
                             partnerOnly: partnerOnly
                         });
@@ -479,6 +483,7 @@ router.get('/:api', function (req, res, next) {
                         CortellisApiKey: cortellisBundleApikey,
                         apiUris: apiUris,
                         apiSubscriptions: apiSubscriptions,
+                        apiSwaggerExsists: apiSwaggerExsist,
                         genericSwaggerUrl: genericSwaggerUrl,
                         partnerOnly: partnerOnly
                 })
