@@ -2,33 +2,37 @@ extends layout
 
 block bodyScripts
   script(type='text/javascript').
-   $('#downloadButton').on('click', function() {
-      var csvContent = "data:text/csv;charset=utf-8,";
-
-      // Extract all rows and cells from the table
-        $('#uniqueContentTableId tr').each(function(index, row) {
-            var cols = $(row).find('td, th');
-            cols.each(function(index, col) {
-                // Check if the cell contains commas
-                var cellText = $(col).text();
-                if (cellText.includes(',')) {
-                    // If the cell contains commas, wrap it in double quotes
-                    csvContent += '"' + cellText + '"';
-                } else {
-                    csvContent += cellText;
-                }
-                csvContent += ",";
-            });
-            csvContent += "\n";
+    $(document).ready(function() {
+      // CSV Download
+      $('#downloadButton').on('click', function() {
+        var csvContent = "data:text/csv;charset=utf-8,";
+        $('#uniqueContentTableId tbody tr:visible').each(function(index, row) {
+          var cols = $(row).find('td');
+          cols.each(function(index, col) {
+            var cellText = $(col).text().trim();
+            csvContent += (cellText.includes(',') ? '"' + cellText + '"' : cellText) + ",";
+          });
+          csvContent += "\n";
         });
-
         var encodedUri = encodeURI(csvContent);
         var link = document.createElement("a");
         link.setAttribute("href", encodedUri);
         link.setAttribute("download", "table.csv");
         document.body.appendChild(link);
-
         link.click();
+      });
+
+      // Per-column search
+      $('#uniqueContentTableId thead tr.search-row input').on('keyup', function () {
+        var colIndex = $(this).closest('td').index();
+        var filter = $(this).val().toLowerCase();
+
+        $('#uniqueContentTableId tbody tr').each(function () {
+          var cell = $(this).find('td').eq(colIndex);
+          var cellText = cell.text().toLowerCase();
+          $(this).toggle(cellText.indexOf(filter) > -1);
+        });
+      });
     });
 
 block content
@@ -43,63 +47,67 @@ block content
 
     if !authUser
       h4 You are not logged in.
-
       p.
         Your are currently not logged in. Some pages and APIs may be restricted to logged in users.
-
       a(href='/login?redirect=/content/toc').btn.btn-primary.btn-lg Log in &raquo;
-
       br
     br
     br
 
-
-
     if (authUser == undefined) 
       each cat, name in toc
-          .panel.panel-default
-            .panel-heading
-              h4.panel-title= cat.name
-            .panel-body
-              div(style="max-height: 20vh; overflow: auto")
-                ul
-                  each entry in cat.entries
-                    if (entry.title !== 'API Usage Information' && entry.title !==  'Terms and Conditions' && entry.title !==  'API Status Dashboard')
-                        li
-                          a(href=entry.url)= entry.title
-    
-    else if (toc) && authUser.admin 
-      each cat, name in toc
-        .panel.panel-default.contentBody
+        .panel.panel-default
           .panel-heading
             h4.panel-title= cat.name
-          .panel-body.contentBody
+          .panel-body
+            div(style="max-height: 20vh; overflow: auto")
+              ul
+                each entry in cat.entries
+                  if (entry.title !== 'API Usage Information' && entry.title !==  'Terms and Conditions' && entry.title !==  'API Status Dashboard')
+                    li
+                      a(href=entry.url)= entry.title
+
+    else if (toc) && authUser.admin 
+      each cat, name in toc
+        if cat.name == 'APIs'
+          .panel.panel-default.contentBody
+            .panel-heading
+              h4.panel-title= cat.name
+
+            .panel-body.contentBody
+
               if cat.name == 'APIs'
-                table#uniqueContentTableId
-                  thead.panel-heading
+                table#uniqueContentTableId.table.table-striped
+                  thead
                     tr
-                      th.panel-heading APIs
-                      th.panel-heading Auth
-                      th.panel-heading Groups 
-                      th.panel-heading Business Segment
-                      th.panel-heading Product Group
-                      th.panel-heading Tags
-                  each entry in cat.entries
-                    tr
-                      td#skuTableBody
-                        a(href=entry.url)= entry.title
-                      td#skuTableBody
-                        a(href=entry.url)= entry.auth
-                      td#skuTableBody
-                        a(href=entry.url style="text-transform:capitalize; font-style:normal;")= entry.requiredGroup
-                      td#skuTableBody
-                        a(href=entry.url)= entry.businessSegment
-                      td#skuTableBody
-                        a(href=entry.url)= entry.productGroup
-                      td#skuTableBody
-                        a(href=entry.url)= entry.tags 
-                br
-              else if cat.name =='Portal Content'
+                      th APIs
+                      th Auth
+                      th Groups
+                      th Business Segment
+                      th Product Group
+                      th Tags
+                    tr.search-row
+                      each _ in ['APIs', 'Auth', 'Groups', 'Business Segment', 'Product Group', 'Tags']
+                        td
+                          input.form-control(type='text', style='width: 100%;')
+
+                  tbody
+                    each entry in cat.entries
+                      tr
+                        td
+                          a(href=entry.url)= entry.title
+                        td
+                          a(href=entry.url)= entry.auth
+                        td
+                          a(href=entry.url style="text-transform:capitalize; font-style:normal;")= entry.requiredGroup
+                        td
+                          a(href=entry.url)= entry.businessSegment
+                        td
+                          a(href=entry.url)= entry.productGroup
+                        td
+                          a(href=entry.url)= entry.tags
+            
+              else if cat.name == 'Portal Content'
                 .panel-body
                   ul
                     each entry in cat.entries
@@ -107,15 +115,10 @@ block content
                         li
                           a(href=entry.url)= entry.title
                   br
-                        
         if cat.name == 'APIs'
           .panel-body
-                p
-                  button#downloadButton.btn.btn-success(type='button') Download as CSV
-
-
-    
-                      
+              p
+                button#downloadButton.btn.btn-success(type='button', style='margin-bottom: 10px;') Download as CSV
     else if (toc) && !authUser || !authUser.admin  
       each cat, name in toc
         .panel.panel-default
@@ -126,5 +129,5 @@ block content
               ul
                 each entry in cat.entries
                   if (entry.title !== 'API Usage Information' && entry.title !==  'Terms and Conditions' && entry.title !==  'API Status Dashboard')
-                      li
-                        a(href=entry.url)= entry.title
+                    li
+                      a(href=entry.url)= entry.title
