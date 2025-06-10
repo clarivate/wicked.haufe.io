@@ -754,10 +754,10 @@ export function kongPatchApi(apiId: string, apiConfig: KongApi, callback: Callba
                         if (existingRoutes && existingRoutes.length > i) {
                             routes[i].id = existingRoutes[i].id;
                     }
-                }
-
-                callback(null, 0, routes);
+                }   
+               
             }
+            callback(null, 0, routes);
      } );
 
         // update/replace routes
