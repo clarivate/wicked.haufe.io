@@ -20,7 +20,8 @@
     "request": "2.88.0",
     "serve-favicon": "2.5.0",
     "uiv": "0.25.0",
-    "vue": "2.5.17"
+    "vue": "2.5.17",
+    "jsonwebtoken": "^9.0.2"
   },
   "scripts": {
     "start": "node ./bin/kickstart",

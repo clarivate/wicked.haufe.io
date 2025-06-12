@@ -4,16 +4,40 @@ const express = require('express');
 const router = express.Router();
 const utils = require('./utils');
 const { debug, info, warn, error } = require('portal-env').Logger('kickstarter:index');
+const jwt = require('jsonwebtoken');
 
 /* GET home page. */
 router.get('/', function (req, res, next) {
+    if (!req.session.user) {
+        return res.redirect(utils.getAzureLoginUrl());
+    }
+
     const kickstarter = utils.loadKickstarter(req.app);
-    res.render('index',
-        {
-            configPath: req.app.get('config_path'),
-            kickstarter: kickstarter
-        });
+    res.render('index', {
+        configPath: req.app.get('config_path'),
+        kickstarter: kickstarter
+    });
 });
+
+router.get('/callback', function (req, res) {
+
+    const idToken = req.query.code;
+    if (!idToken) return res.status(401).send('Missing token');
+
+    const decoded = jwt.decode(idToken, { complete: true });
+    if (!decoded) return res.status(401).send('Invalid token');
+
+    req.session.user = {
+        name: decoded.payload.name,
+        email: decoded.payload.preferred_username
+    };
+    const kickstarter = utils.loadKickstarter(req.app);
+    res.render('index', {
+        configPath: req.app.get('config_path'),
+        kickstarter: kickstarter
+    });
+});
+
 
 router.post('/', function (req, res, next) {
     const redirect = req.body.redirect;
