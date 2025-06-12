@@ -39,6 +39,7 @@ const authservers = require('./routes/authservers');
 const pools = require('./routes/pools');
 const apiBundle = require('./routes/apiBundle')
 const conditionalEnsureAuth = require( './routes/auth');
+const session = require('express-session');
 
 // API functions
 const api = require('./routes/api');
