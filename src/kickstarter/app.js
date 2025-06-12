@@ -38,11 +38,22 @@ const shutdown = require('./routes/shutdown');
 const authservers = require('./routes/authservers');
 const pools = require('./routes/pools');
 const apiBundle = require('./routes/apiBundle')
+const conditionalEnsureAuth = require( './routes/auth');
 
 // API functions
 const api = require('./routes/api');
 
 const app = express();
+
+app.use(session({
+    secret: 'dummy-secret',
+    resave: false,
+    saveUninitialized: true,
+    cookie: { httpOnly: true, sameSite: 'lax' }
+}));
+
+app.use('*', conditionalEnsureAuth);
+
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));

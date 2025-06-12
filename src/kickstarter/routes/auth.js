@@ -4,43 +4,24 @@ const express = require('express');
 const router = express.Router();
 const { debug, info, warn, error } = require('portal-env').Logger('kickstarter:auth');
 
-const utils = require('./utils');
+const { getAzureLoginUrl } = require('./utils.js')
 
-router.get('/', function (req, res, next) {
-    res.redirect('/authservers');
-    // var glob = utils.loadGlobals(req.app);
-    // var envVars = utils.loadEnvDict(req.app);
-    // utils.mixinEnv(glob, envVars);
 
-    // res.render('auth',
-    //     {
-    //         configPath: req.app.get('config_path'),
-    //         glob: glob
-    //     });
-});
+function conditionalEnsureAuth(req, res, next) {
+    const openPaths = ['/', '/callback', '/logout'];
 
-// router.post('/', function (req, res, next) {
-//     var redirect = req.body.redirect;
+    if (openPaths.includes(req.path)) {
+        return next();
+    }
 
-//     var body = utils.jsonifyBody(req.body);
+    if (req.session && req.session.user) {
+        return next();
+    }
 
-//     var glob = utils.loadGlobals(req.app);
-//     var envVars = utils.loadEnvDict(req.app);
-//     glob.auth = body.glob.auth;
-    
-//     utils.mixoutEnv(glob, envVars);
-//     debug(glob);
-//     debug(envVars);
+    return res.redirect(getAzureLoginUrl());
+}
 
-//     utils.saveGlobals(req.app, glob);
-//     utils.saveEnvDict(req.app, envVars, "default");
+module.exports = conditionalEnsureAuth;
 
-//     // Write changes to Kickstarter.json
-//     var kickstarter = utils.loadKickstarter(req.app);
-//     kickstarter.auth = 3;
-//     utils.saveKickstarter(req.app, kickstarter);
-
-//     res.redirect(redirect);
-// });
 
 module.exports = router;

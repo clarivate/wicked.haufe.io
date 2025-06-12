@@ -1256,4 +1256,37 @@ utils.getApiRoutes= function (app, apiIds) {
     })
     return paths
 };
+
+utils.getAzureLoginUrl = function({ env = 'dev', subenv = 'snapshot', provider = 'azure', app = 'cadp', appurl } = {}) {
+    let config;
+    switch (env) {
+        case 'dev':
+            config = {
+                baseUrl: `https://access.dev-${subenv}.clarivate.com/api/authorize`,
+                callback: `https://kickstarter-dev-snapshot-us-west-2.dev.sp.aws.clarivate.net/callback/`
+            };
+            break;
+        case 'perf':
+            config = {
+                baseUrl: `https://access.test-${subenv}.clarivate.com/api/authorize`,
+                callback: `https://kickstarter-dev-snapshot-us-west-2.dev.sp.aws.clarivate.net/callback/`
+            };
+            break;
+        case 'prod':
+            config = {
+                baseUrl: `https://access.clarivate.com/api/authorize`,
+                callback: `https://kickstarter-dev-snapshot-us-west-2.dev.sp.aws.clarivate.net/callback/`
+            };
+            break;
+        default:
+            config = {
+                baseUrl: `https://access.dev-snapshot.clarivate.com/api/authorize`,
+                callback: `https://kickstarter-dev-snapshot-us-west-2.dev.sp.aws.clarivate.net/callback/`
+            };
+    }
+
+    const callbackUrl = appurl || config.callback;
+    return `${config.baseUrl}?provider=${provider}&app=${app}&appurl=${encodeURIComponent(callbackUrl)}`;
+};
+
 module.exports = utils;
