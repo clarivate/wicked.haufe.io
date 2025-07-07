@@ -8,9 +8,8 @@ const favicon = require('serve-favicon');
 const logger = require('morgan');
 const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
-console.log(module.paths);
 
-const { debug, info, warn, error } = require('./node_modules/portal-env').Logger('kickstarter:kickstart');
+const { debug, info, warn, error } = require('portal-env').Logger('kickstarter:kickstart');
 
 const routes = require('./routes/index');
 const apis = require('./routes/apis');
@@ -49,7 +48,7 @@ const api = require('./routes/api');
 const app = express();
 
 app.use(session({
-    secret: 'dummy-secret',
+    secret: 'dummy-secret',//to be replaced with secure key later
     resave: false,
     saveUninitialized: true,
     cookie: { httpOnly: true, sameSite: 'lax' }
