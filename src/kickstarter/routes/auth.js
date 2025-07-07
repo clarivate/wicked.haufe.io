@@ -4,12 +4,17 @@ const express = require('express');
 const router = express.Router();
 const { debug, info, warn, error } = require('portal-env').Logger('kickstarter:auth');
 
-const { getAzureLoginUrl } = require('./utils.js')
 
 
 function conditionalEnsureAuth(req, res, next) {
-    const openPaths = ['/', '/callback', '/logout'];
-
+    const openPaths = ['/callback', '/logout', '/adlogin'];
+    const assetExtensions = ['.css', '.js', '.png', '.jpg', '.jpeg', '.gif', '.svg', '.ico', '.woff', '.woff2', '.ttf', '.eot', '.map'];
+    if (assetExtensions.some(ext => req.path.endsWith(ext))) {
+        return next();
+    }
+    info('Checking authentication for path:', req.path);
+    info('Open paths:', openPaths);
+    info('User session:', req.session && req.session.user);
     if (openPaths.includes(req.path)) {
         return next();
     }
@@ -18,10 +23,7 @@ function conditionalEnsureAuth(req, res, next) {
         return next();
     }
 
-    return res.redirect(getAzureLoginUrl());
+    return res.render('login');
 }
 
 module.exports = conditionalEnsureAuth;
-
-
-module.exports = router;

@@ -8,8 +8,8 @@ const jwt = require('jsonwebtoken');
 
 /* GET home page. */
 router.get('/', function (req, res, next) {
-    if (!req.session.user) {
-        return res.redirect(utils.getAzureLoginUrl());
+    if (req.session && !req.session.user) {
+        return res.render('login');
     }
 
     const kickstarter = utils.loadKickstarter(req.app);
@@ -19,9 +19,21 @@ router.get('/', function (req, res, next) {
     });
 });
 
+router.get('/adlogin', function (req, res) {
+    if (req.session.user) {
+        const kickstarter = utils.loadKickstarter(req.app);
+        return res.render('index', {
+            configPath: req.app.get('config_path'),
+            kickstarter: kickstarter
+        });
+    }
+    const azureLoginUrl = utils.getAzureLoginUrl(req.app);
+    res.redirect(azureLoginUrl);
+});
+
 router.get('/callback', function (req, res) {
 
-    const idToken = req.query.code;
+    const jwtToken = req.query.code;
     if (!idToken) return res.status(401).send('Missing token');
 
     const decoded = jwt.decode(idToken, { complete: true });

@@ -8,8 +8,10 @@ const favicon = require('serve-favicon');
 const logger = require('morgan');
 const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
+console.log(module.paths);
 
-const { debug, info, warn, error } = require('portal-env').Logger('kickstarter:kickstart');
+const { debug, info, warn, error } = require('./node_modules/portal-env').Logger('kickstarter:kickstart');
+
 const routes = require('./routes/index');
 const apis = require('./routes/apis');
 const auth = require('./routes/auth');
@@ -53,7 +55,7 @@ app.use(session({
     cookie: { httpOnly: true, sameSite: 'lax' }
 }));
 
-app.use('*', conditionalEnsureAuth);
+app.use(conditionalEnsureAuth);
 
 
 // view engine setup

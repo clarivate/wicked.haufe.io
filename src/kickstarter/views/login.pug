@@ -1,0 +1,24 @@
+doctype html
+html
+  head
+    title wicked - Kickstarter
+    link(rel='stylesheet', href='/css/bootstrap.min.css')
+    link(rel='stylesheet', href='/stylesheets/style.css')
+    style.
+      html, body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+      }
+  body
+    .card
+      .card-body
+        h2.mb-4.text-center Please login with your Azure AD credentials before using Kickstarter.
+        form(action="/adlogin" method="get" class="justify-content-center d-flex")
+          button.btn.btn-primary(type="submit" style="min-width:150px;") Login with Azure AD
