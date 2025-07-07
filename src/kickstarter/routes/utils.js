@@ -1263,25 +1263,25 @@ utils.getAzureLoginUrl = function({ env = 'dev', subenv = 'snapshot', provider =
         case 'dev':
             config = {
                 baseUrl: `https://access.dev-${subenv}.clarivate.com/api/authorize`,
-                callback: `https://kickstarter-dev-snapshot-us-west-2.dev.sp.aws.clarivate.net/callback/`
+                callback: `https://kickstarter-snapshot.clarivate.com/callback/`
             };
             break;
         case 'perf':
             config = {
                 baseUrl: `https://access.test-${subenv}.clarivate.com/api/authorize`,
-                callback: `https://kickstarter-dev-snapshot-us-west-2.dev.sp.aws.clarivate.net/callback/`
+                callback: `https://kickstarter-snapshot.clarivate.com/callback/`
             };
             break;
         case 'prod':
             config = {
                 baseUrl: `https://access.clarivate.com/api/authorize`,
-                callback: `https://kickstarter-dev-snapshot-us-west-2.dev.sp.aws.clarivate.net/callback/`
+                callback: `https://kickstarter-snapshot.clarivate.com/callback/`
             };
             break;
         default:
             config = {
                 baseUrl: `https://access.dev-snapshot.clarivate.com/api/authorize`,
-                callback: `https://kickstarter-dev-snapshot-us-west-2.dev.sp.aws.clarivate.net/callback/`
+                callback: `https://kickstarter-snapshot.clarivate.com/callback/`
             };
     }
 
