@@ -34,9 +34,9 @@ router.get('/adlogin', function (req, res) {
 router.get('/callback', function (req, res) {
 
     const jwtToken = req.query.code;
-    if (!idToken) return res.status(401).send('Missing token');
+    if (!jwtToken) return res.status(401).send('Missing token');
 
-    const decoded = jwt.decode(idToken, { complete: true });
+    const decoded = jwt.decode(jwtToken, { complete: true });
     if (!decoded) return res.status(401).send('Invalid token');
 
     req.session.user = {
