@@ -12,10 +12,10 @@ function conditionalEnsureAuth(req, res, next) {
     if (assetExtensions.some(ext => req.path.endsWith(ext))) {
         return next();
     }
-    info('Checking authentication for path:', req.path);
-    info('Open paths:', openPaths);
-    info('User session:', req.session && req.session.user);
-    if (openPaths.includes(req.path)) {
+    if (openPaths.some(openPath => {
+        const regex = new RegExp(`([/?])${openPath.replace(/^\//, '')}([/?]|$)`);
+        return regex.test(req.path);
+    })) {
         return next();
     }
 
