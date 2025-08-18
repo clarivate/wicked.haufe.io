@@ -255,9 +255,11 @@ html
           });
         } 
 
-        $('a[href]:not([href="/"]').click(function(event) {
+        $('a[href]:not([href="/"], [href="/shutdown"])').click(function(event) {
           var href = $(this).attr('href');
-          return validateEnvironmentSelection(event, href);
+          if (!href.startsWith('#') && !href.startsWith('http')) {
+            return validateEnvironmentSelection(event, href);
+          }
         });
       });
 
@@ -335,21 +337,22 @@ html
                     a(href='/productGroups') Product Groups  
                   li
                     a(href='/bundles') API Bundles
-            ul.nav.navbar-nav.navbar-right  
-              li(class="dropdown" style="padding:15px")
+            ul.nav.navbar-nav.navbar-right
+              if isVuePage
+                li(style="padding-top:10px; padding-right:20px;")
+                  button(onclick="storeData();" class="btn btn-primary") Save
+                  span &nbsp;&nbsp;&nbsp;&nbsp;
+              li(class="dropdown" style="padding-top:8px")
                 label(for="environmentSelector" style="color:white;font-weight:bold;margin-bottom:2px;") Select the environment to configure : 
-                &nbsp;&nbsp;&nbsp;&nbsp;
                 select(id="environmentSelector" class="form-control environment-selector" style="width:150px; display:inline-block;" onchange="handleEnvironmentChange()")
                   option(value="" selected) None
                   option(value="snapshot") Snapshot
                   option(value="stable") Stable
                   option(value="test-perf") Test-perf
                   option(value="production") Production
-              if isVuePage
-                li(style="padding:15px")
-                  button(onclick="storeData();" class="btn btn-primary") Save
-                  span &nbsp;&nbsp;&nbsp;&nbsp;    
-
+              li(style="padding-left:10px")
+                a(href='/shutdown' style='text-decoration:none' title='Shut down Kickstarter')
+                  span(style='font-size:1.5em').glyphicon.glyphicon-off
 
     block content
 
@@ -359,6 +362,9 @@ html
         tr
           td        
             | <strong>Configuration Path: </strong><code>#{configPath}</code><br>
+          td(style='text-align:right;width:50px;')
+            a(href='/shutdown' style='text-decoration:none' title='Shut down Kickstarter')
+              span(style='font-size:1.5em').glyphicon.glyphicon-off
           //td
           //  | <strong>Environment File: </strong><code>#{envFile}</code>
       table(width='100%')
