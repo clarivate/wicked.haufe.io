@@ -193,6 +193,75 @@ html
           $("#" + encryptCbId).attr("disabled", true);
       }
 
+      var selectedEnvironment = '';
+
+      function handleEnvironmentChange() {
+        var selector = document.getElementById('environmentSelector');
+        selectedEnvironment = selector.value;
+      
+        if (selectedEnvironment && selectedEnvironment !== '') {
+          localStorage.setItem('selectedEnvironment', selectedEnvironment);
+        } else {
+          localStorage.removeItem('selectedEnvironment');
+        }
+      }
+
+      function loadSelectedEnvironment() {
+        var savedEnvironment = localStorage.getItem('selectedEnvironment');
+        if (savedEnvironment) {
+          selectedEnvironment = savedEnvironment;
+          var selector = document.getElementById('environmentSelector');
+          if (selector) {
+            selector.value = savedEnvironment;
+          }
+        }
+      }
+
+      function validateEnvironmentSelection(event, targetHref) {
+       
+        var currentEnvironment = selectedEnvironment || localStorage.getItem('selectedEnvironment');
+        if (!currentEnvironment || currentEnvironment === '') {
+          event.preventDefault();
+          showEnvironmentAlert();
+
+          return false;
+        }
+        return true;
+      }
+
+      function showEnvironmentAlert() {
+        $('#modalTitle').text('Environment Selection Required');
+        $('#modalContent').html('<p>Please choose the environment before proceeding.</p>');
+        $('#modalDialog').modal('show');
+
+        $('#modalDialog').off('hidden.bs.modal').on('hidden.bs.modal', function () {
+          var selector = document.getElementById('environmentSelector');
+          var currentEnvironment = selectedEnvironment || localStorage.getItem('selectedEnvironment');
+          if (!currentEnvironment || currentEnvironment === '') {
+            selector.classList.add('highlight-env');
+          }
+        });
+      }
+
+      $(document).ready(function() {
+     
+        loadSelectedEnvironment();
+        var selector = document.getElementById('environmentSelector');
+        if (selector) {
+          selector.addEventListener('change', function() {
+            if (selector.value && selector.value !== '') {
+              selector.classList.remove('highlight-env');
+            }
+          });
+        } 
+
+        $('a[href]:not([href="/"]').click(function(event) {
+          var href = $(this).attr('href');
+          return validateEnvironmentSelection(event, href);
+        });
+      });
+
+
     block scripts
 
     block moreScripts
@@ -267,13 +336,21 @@ html
                   li
                     a(href='/bundles') API Bundles
             ul.nav.navbar-nav.navbar-right
+              li(class="dropdown" style="padding: 15px;")
+                label(for="environmentSelector" style="color:white;font-weight:bold;margin-bottom:2px;") Select the environment to configure: 
+                &nbsp;&nbsp;&nbsp;
+                select(id="environmentSelector" class="form-control environment-selector" style="width:150px; display:inline-block;" onchange="handleEnvironmentChange()")
+                  option(value="" selected) None
+                  option(value="snapshot") Snapshot
+                  option(value="stable") Stable
+                  option(value="test-perf") Test-perf
+                  option(value="production") Production
               if isVuePage
-                li(style="padding-top:10px")
+                li(style="padding: 15px;")
                   button(onclick="storeData();" class="btn btn-primary") Save
-                  span &nbsp;&nbsp;&nbsp;&nbsp;
-              li
-                a(href='/shutdown' style='text-decoration:none' title='Shut down Kickstarter')
-                  span(style='font-size:1.5em').glyphicon.glyphicon-off
+              //- li(style="padding-left:10px")
+              //-   a(href='/shutdown' style='text-decoration:none' title='Shut down Kickstarter')
+              //-     span(style='font-size:1.5em').glyphicon.glyphicon-off
 
     block content
 
@@ -283,9 +360,9 @@ html
         tr
           td        
             | <strong>Configuration Path: </strong><code>#{configPath}</code><br>
-          td(style='text-align:right;width:50px;')
-            a(href='/shutdown' style='text-decoration:none' title='Shut down Kickstarter')
-              span(style='font-size:1.5em').glyphicon.glyphicon-off
+          //- td(style='text-align:right;width:50px;')
+          //-   a(href='/shutdown' style='text-decoration:none' title='Shut down Kickstarter')
+          //-     span(style='font-size:1.5em').glyphicon.glyphicon-off
           //td
           //  | <strong>Environment File: </strong><code>#{envFile}</code>
       table(width='100%')

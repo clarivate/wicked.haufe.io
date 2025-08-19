@@ -1,4 +1,11 @@
 /* You can change all the settings in CSS you need and want here. */
+.highlight-env {
+  border: 2px solid #ff9800;
+  box-shadow: 0 0 8px #ff9800;
+  background-color: #fff3e0;
+  transition: box-shadow 0.2s, border 0.2s;
+}
+
 html {
   position: relative;
   min-height: 100%;
