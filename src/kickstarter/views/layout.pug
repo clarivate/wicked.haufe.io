@@ -243,6 +243,34 @@ html
         });
       }
 
+      function handleEnvironmentChange() {
+        var selector = document.getElementById('environmentSelector');
+        selectedEnvironment = selector.value;
+        if (selectedEnvironment && selectedEnvironment !== '') {
+          localStorage.setItem('selectedEnvironment', selectedEnvironment);
+          fetch('/envchange/change', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ env: selectedEnvironment })
+          })
+          .then(res => res.json())
+          .then(data => {
+            if (data.success) {
+              localStorage.setItem('selectedEnvironment', selectedEnvironment);
+              console.log('Environment changed:', data);
+              window.location.reload();
+            } else {
+              alert('Failed to change environment: ' + (data.error || 'Unknown error'));
+            }
+          })
+          .catch(err => {
+            alert('Error changing environment: ' + err);
+          });
+        } else {
+          localStorage.removeItem('selectedEnvironment');
+        }
+      }
+
       $(document).ready(function() {
      
         loadSelectedEnvironment();
@@ -338,13 +366,12 @@ html
             ul.nav.navbar-nav.navbar-right
               li(class="dropdown" style="padding: 15px;")
                 label(for="environmentSelector" style="color:white;font-weight:bold;margin-bottom:2px;") Select the environment to configure: 
-                &nbsp;&nbsp;&nbsp;
                 select(id="environmentSelector" class="form-control environment-selector" style="width:150px; display:inline-block;" onchange="handleEnvironmentChange()")
                   option(value="" selected) None
-                  option(value="snapshot") Snapshot
-                  option(value="stable") Stable
+                  option(value="dev-snapshot") Snapshot
+                  option(value="dev-stable") Stable
                   option(value="test-perf") Test-perf
-                  option(value="production") Production
+                  option(value="prod-prod1") Production
               if isVuePage
                 li(style="padding: 15px;")
                   button(onclick="storeData();" class="btn btn-primary") Save

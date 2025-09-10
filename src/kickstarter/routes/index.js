@@ -6,7 +6,40 @@ const utils = require('./utils');
 const { debug, info, warn, error } = require('portal-env').Logger('kickstarter:index');
 const jwt = require('jsonwebtoken');
 
-/* GET home page. */
+/* GET home page. 
+// Dummy session population for development/testing
+router.get('/', function (req, res) {
+    req.session.user = {
+        name: 'Dummy User',
+        email: 'dummy.user@example.com'
+    };
+    const kickstarter = utils.loadKickstarter(req.app);
+    res.render('index', {
+        configPath: req.app.get('config_path'),
+        kickstarter: kickstarter
+    });
+});
+router.get('/adlogin', function (req, res) {
+    req.session.user = {
+        name: 'Dummy User',
+        email: 'dummy.user@example.com'
+    };
+    req.session.base_path = process.env.BASE_PATH || '/';
+    req.session.config_path = process.env.CONFIG_PATH || '/config';
+
+    if (req.session.user) {
+        const kickstarter = utils.loadKickstarter(req.app);
+        return res.render('index', {
+            configPath: req.app.get('config_path'),
+            kickstarter: kickstarter
+        });
+    }
+
+
+    /*const azureLoginUrl = utils.getAzureLoginUrl(req.app);
+    res.redirect(azureLoginUrl);
+});*/
+
 router.get('/', function (req, res, next) {
     if (req.session && !req.session.user) {
         return res.render('login');
@@ -43,6 +76,10 @@ router.get('/callback', function (req, res) {
         name: decoded.payload.name,
         email: decoded.payload.preferred_username
     };
+    
+    req.session.base_path = process.env.BASE_PATH || '/';
+    req.session.config_path = process.env.CONFIG_PATH || '/config';
+
     const kickstarter = utils.loadKickstarter(req.app);
     res.render('index', {
         configPath: req.app.get('config_path'),

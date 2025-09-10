@@ -8,6 +8,8 @@ const favicon = require('serve-favicon');
 const logger = require('morgan');
 const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
+const http = require('http');
+const fs = require('fs-extra');
 
 const { debug, info, warn, error } = require('portal-env').Logger('kickstarter:kickstart');
 
@@ -41,6 +43,7 @@ const pools = require('./routes/pools');
 const apiBundle = require('./routes/apiBundle')
 const conditionalEnsureAuth = require( './routes/auth');
 const session = require('express-session');
+const envchange = require('./routes/envchange');
 
 // API functions
 const api = require('./routes/api');
@@ -56,6 +59,26 @@ app.use(session({
 
 app.use(conditionalEnsureAuth);
 
+app.use((req, res, next) => {
+
+  const rawGet = req.app.get.bind(req.app);
+  req.app.get = (key) => {
+    if (key === 'config_path') {
+      return req.session && req.session.config_path;
+    }
+    if (key === 'base_path') {
+      return req.session && req.session.base_path;
+    }
+    return rawGet(key);
+  };
+  next();
+});
+
+
+app.use((req, res, next) => {
+    console.log('User session path data:', req.session.config_path);
+    next();
+});
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -102,7 +125,9 @@ app.use('/editcontent', editcontent);
 app.use('/templates', templates);
 app.use('/envs', envs);
 app.use('/pools', pools);
-app.use('/shutdown', shutdown);
+app.use('/envchange', envchange);
+
+//app.use('/shutdown', shutdown);
 
 app.use('/api', api);
 app.use('/bundles',apiBundle);
@@ -127,5 +152,86 @@ app.use(function (err, req, res, next) {
         error: err
     });
 });
+
+
+
+//kickstart script changes add start
+
+const DEFAULT_BASE_PATH = process.env.DEFAULT_BASE_PATH
+    ? path.join(process.env.DEFAULT_BASE_PATH, 'dev-snapshot')
+    : path.join(__dirname, '..', 'dev-snapshot');
+    
+const DEFAULT_CONFIG_PATH = process.env.DEFAULT_CONFIG_PATH || path.join(DEFAULT_BASE_PATH, 'static');
+
+
+process.env.BASE_PATH = process.env.BASE_PATH || DEFAULT_BASE_PATH;
+process.env.CONFIG_PATH = process.env.CONFIG_PATH || DEFAULT_CONFIG_PATH;
+
+
+function findEnvKeyFileName(baseDir) {
+    const fileNames = fs.existsSync(baseDir) ? fs.readdirSync(baseDir) : [];
+    for (let i = 0; i < fileNames.length; ++i) {
+        const fileName = fileNames[i];
+        if (/[a-zA-Z0-9\._]*envkey/.test(fileName))
+            return path.join(baseDir, fileName);
+    }
+    return null;
+}
+
+let configKeyFileName = findEnvKeyFileName(process.env.CONFIG_PATH);
+if (!configKeyFileName) {
+    warn('Did not find a *.envkey file in the configuration path. Creating a new one.');
+    warn('Setting up a new deploy.envkey...');
+    configKeyFileName = path.join(process.env.CONFIG_PATH, 'deploy.envkey');
+    fs.ensureDirSync(process.env.CONFIG_PATH);
+    fs.writeFileSync(configKeyFileName, 'dummy-env-key', 'utf8'); // Use dummy for local
+}
+info('Found config key file ' + configKeyFileName);
+const configKey = fs.readFileSync(configKeyFileName, 'utf8').trim();
+
+app.set('base_path', process.env.BASE_PATH);
+app.set('config_path', process.env.CONFIG_PATH);
+app.set('config_key', configKey);
+
+// Start server here for local setup
+const port = normalizePort(process.env.PORT || '3333');
+app.set('port', port);
+const server = http.createServer(app);
+server.listen(port);
+server.on('error', onError);
+server.on('listening', onListening);
+
+function normalizePort(val) {
+    const port = parseInt(val, 10);
+    if (isNaN(port)) return val;
+    if (port >= 0) return port;
+    return false;
+}
+function onError(error) {
+    if (error.syscall !== 'listen') throw error;
+    const bind = typeof port === 'string' ? 'Pipe ' + port : 'Port ' + port;
+    switch (error.code) {
+        case 'EACCES':
+            console.error(bind + ' requires elevated privileges');
+            process.exit(1);
+            break;
+        case 'EADDRINUSE':
+            console.error(bind + ' is already in use');
+            process.exit(1);
+            break;
+        default:
+            throw error;
+    }
+}
+function onListening() {
+    const addr = server.address();
+    const bind = typeof addr === 'string' ? 'pipe ' + addr : 'port ' + addr.port;
+    debug('Listening on ' + bind);
+    info('Kickstarter running. Browse to http://localhost:' + port);
+    info("--> To shut down, use the 'shutdown' icon on the web page or press Ctrl-C.");
+}
+
+
+//kickstart script changes add end
 
 module.exports = app;
