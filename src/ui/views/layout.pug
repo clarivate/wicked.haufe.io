@@ -115,14 +115,15 @@ html
                                     input(name='searchQuery' id='searchQuery' type='text' class='form-control' placeholder='Enter API name' value=params.searchQuery)
                                     button(type='submit' class='btn btn-primary' style='background-color: #666aac; color: #fff;' )
                                         i(class='glyphicon glyphicon-search')
-                    ul(class=`nav navbar-nav navbar-${glob.layouts.menu.classForLoginSignupPosition}`)
-                        if !authUser
-                            if route == '/login'
-                                li.active
-                                    a(href="/login")= glob.layouts.menu.loginLinkText
-                            else
-                                li
-                                    a(href="/login")= glob.layouts.menu.loginLinkText
+                    if !authUser
+                        ul(class=`nav navbar-nav navbar-${glob.layouts.menu.classForLoginSignupPosition}`)
+                            if !authUser
+                                if route == '/login'
+                                    li.active
+                                        a(href="/login")= glob.layouts.menu.loginLinkText
+                                else
+                                    li
+                                        a(href="/login")= glob.layouts.menu.loginLinkText
                     if authUser
                         ul(class='nav navbar-nav navbar-right')
                             li
