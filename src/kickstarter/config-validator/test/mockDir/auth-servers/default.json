@@ -1,0 +1,6 @@
+{
+  "authMethods": [
+    { "name": "auth1" },
+    { "name": "auth2" }
+  ]
+}

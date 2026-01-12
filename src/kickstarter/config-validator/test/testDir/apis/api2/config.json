@@ -1,0 +1,46 @@
+{
+  "api": {
+    "upstream_url": "http://clarivate.com",
+    "name": "api2",
+    "routes": [
+      {
+        "paths": [
+          "/internal/api/oauth",
+          "/internal/api/merge",
+          "/internal/api/users/sprefs",
+          "/internal/api/account"
+        ],
+        "strip_path": false,
+        "preserve_host": false
+      }
+    ],
+    "host": "$PORTAL_NETWORK_APIHOST"
+  },
+  "plugins": [
+    {
+      "config": {
+        "vipAddress": "1pauth.{CLOUD_STACK}.{CLOUD_DEV_PHASE}.{CLOUD_ENVIRONMENT}"
+      },
+      "name": "eureka-router"
+    },
+    {
+      "config": {
+        "replacement": [
+          {
+            "search": "/internal/api/",
+            "replace": "/"
+          },
+          {
+            "search": "/internal/api/merge",
+            "replace": "/authorize/merge"
+          },
+          {
+            "search": "/internal/api/oauth",
+            "replace": "/authorize/verify"
+          }
+        ]
+      },
+      "name": "url-replace"
+    }
+  ]
+}

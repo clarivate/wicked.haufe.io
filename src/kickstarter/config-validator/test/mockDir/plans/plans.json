@@ -1,0 +1,6 @@
+{
+  "plans": [
+    { "id": "plan1", "name": "Plan 1" },
+    { "id": "plan2", "name": "Plan 2" }
+  ]
+}

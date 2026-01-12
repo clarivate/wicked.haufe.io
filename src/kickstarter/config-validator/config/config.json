@@ -1,0 +1,4 @@
+{
+    "USE_PORTAL_API" : true,
+    "USE_SSM" : false
+}

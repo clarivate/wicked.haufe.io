@@ -1,0 +1,38 @@
+{
+    "api_meta" : { 
+         "type" : "object",
+         "mandatory" : true,
+         "fields" : {
+            "id" : {
+                "type" :"string",
+                "mandatory": true
+            },
+            "name" : {
+                "type" :"string",
+                "mandatory": true
+            },
+            "desc" : {
+                "type":"string",
+                "mandatory":true
+            },
+            "auth" : {
+                "type":"string",
+                "mandatory":true
+            },
+            "tags" : {
+                "type" : "array",
+                "mandatory" : "true",
+                "elements": {
+                    "type": "string"
+                }
+            },
+            "plans" : {
+                "type" : "array",
+                "mandatory" : "true",
+                "elements": {
+                    "type": "string"
+                }
+            }
+        }
+    }
+}
