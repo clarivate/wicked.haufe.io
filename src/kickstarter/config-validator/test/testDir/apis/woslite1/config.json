@@ -1,0 +1,27 @@
+{
+  "api": {
+    "name": "woslite2",
+    "upstream_url": "http://clarivate.com/woslite2/",
+    "host": "$PORTAL_NETWORK_APIHOST",
+    "routes": [
+      {
+        "paths": [
+          "/api/woslite2"
+        ],
+        "strip_path": true
+      }
+    ]
+  },
+  "plugins": [
+    {
+      "config": {
+        "vipAddress": "wosrestadapter.wos.{CLOUD_DEV_PHASE}.{CLOUD_ENVIRONMENT}"
+      },
+      "name": "eureka-router"
+    },
+    {
+      "config": {},
+      "name": "custom-key-headers"
+    }
+  ]
+}

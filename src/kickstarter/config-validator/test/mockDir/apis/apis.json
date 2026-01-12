@@ -1,0 +1,6 @@
+{
+  "apis": [
+    { "id": "api1", "name": "API 1" },
+    { "id": "api2", "name": "API 2" }
+  ]
+}

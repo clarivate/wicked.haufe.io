@@ -1,0 +1,66 @@
+{ 
+  "api": {
+    "upstream_url": "http://clarivate.com/",
+    "name": "api1",
+    "routes": [
+      {
+        "paths": [
+          "/internal/api/account/auth"
+        ],
+        "strip_path": false,
+        "preserve_host": false
+      }
+    ],
+    "host": "$PORTAL_NETWORK_APIHOST"
+  },
+  "plugins": [
+    {
+      "config": {
+        "vipAddress": "1pauth.{CLOUD_STACK}.{CLOUD_DEV_PHASE}.{CLOUD_ENVIRONMENT}"
+      },
+      "name": "eureka-router"
+    },
+    {
+      "config": {
+        "replacement": [
+          {
+            "search": "/internal/api/account/auth",
+            "replace": "/account"
+          }
+        ]
+      },
+      "name": "url-replace"
+    },
+    {
+      "name": "jwt",
+      "config": {
+        "claims_to_verify": ["exp"],
+        "token_verify": {
+          "username_claim": "1p:eml",
+          "customid_claim": "sub",
+          "rsa_public_key": "$PORTAL_JWT_PA_TOKEN_PEM",
+          "jwt_algorithm": "$PORTAL_JWT_TOKEN_ALG",
+          "expired_code": 419,
+          "headers": [
+            {
+              "key": "x-1p-secl",
+              "claim": "1p:lns"
+            },
+            {
+              "key": "x-1p-user",
+              "claim": "sub"
+            },
+            {
+              "key": "x-1p-emp",
+              "claim": "1p:pid"
+            },
+            {
+              "key": "x-1p-email",
+              "claim": "1p:peml"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

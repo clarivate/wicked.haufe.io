@@ -227,7 +227,7 @@ router.get('/:apiId', function (req, res, next) {
     });
 });
 
-router.post('/:apiId/api', function (req, res, next) {
+router.post('/:apiId/api', async function (req, res, next) {
     const body = utils.getJson(req.body);
     // debug(JSON.stringify(body, null, 2));
     const apiId = req.params.apiId;
@@ -246,12 +246,16 @@ router.post('/:apiId/api', function (req, res, next) {
     const plugins = pluginUtils.makePluginsArray(body.plugins);
     const config = body.config;
     //config.api.uris = config.api.uris.filter(u => !!u);
-
+    console.log("Routes before cleaning:", JSON.stringify(config.api.routes, null, 2));
     config.api.routes.forEach( r => {
         r.uris = r.uris ? r.uris.filter(u => !!u) : r.uris;
         r.protocols = r.protocols ? r.protocols.filter(u => !!u) : r.protocols;
         r.methods = r.methods ? r.methods.filter(u => !!u) : r.methods;
         r.hosts = r.hosts ? r.hosts.filter(u => !!u) : r.hosts;
+        // if (r.uris) r.uris = r.uris.filter(u => !!u);
+        // if (r.protocols) r.protocols = r.protocols.filter(u => !!u);
+        // if (r.methods) r.methods = r.methods.filter(u => !!u);
+        // if (r.hosts) r.hosts = r.hosts.filter(u => !!u);
     });
 
     const kongConfig = {
@@ -281,26 +285,82 @@ router.post('/:apiId/api', function (req, res, next) {
             // kongConfig.plugins.push(requestTransformerPlugin);  // testing required
     }
     // End -- Adding headers via request-transformer for business segments and product groups
+    
+    // Validation before saving api config
+    const envDir = req.app.get('config_path');
+    const env = 'dev-snapshot';// Extract env name from path
+    const env1=req.session.env;
+    console.log(`[API Save] Environment from session: ${env1}`);
+    
+    console.log(`[API Save] Starting validation for API: ${apiId}`);
+    console.log(`[API Save] Environment: ${env}`);
+    console.log(`[API Save] Config path: ${envDir}`);
 
-    utils.saveApiConfig(req.app, apiId, kongConfig);
-    utils.saveApiDesc(req.app, apiId, body.desc);
-    let swagger = '';
-    let message = 'OK';
-    try {
-        swagger = JSON.parse(body.swagger);
-    } catch (err) {
-        // If we ran into trouble, we'll try YAML
-        try {
-            swagger = yaml.safeLoad(body.swagger);
-        } catch (err) {
-            // OK, not good, we'll store as is and return a message
-            swagger = body.swagger;
-            message = 'The Swagger content is neither valid JSON not valid YAML; the content will not render in the Swagger UI component.';
+ try {
+        console.log("kongConfig:", JSON.stringify(kongConfig, null, 2));
+        console.log("api metadata:", JSON.stringify(body.api, null, 2));
+        
+        // Call comprehensive validation function
+        const validationErrors = await validateApiBeforeSave(
+            envDir,         // Environment directory: /path/to/dev-snapshot/static
+            env,            // Environment name: 'dev-snapshot'
+            body.api,       // API metadata from request
+            kongConfig,     // API config with plugins
+            true           // checkPortal: false for faster validation (true for subscription checks)
+        );
+        
+        // If validation fails, return errors to client
+        if (validationErrors.length > 0) {
+            console.error('Validation failed:', validationErrors);
+            return res.status(400).json({
+                error: 'API validation failed',
+                validationErrors: validationErrors,
+                message: 'Please fix the validation errors before saving'
+            });
         }
+        
+        console.log('✓ Validation passed - proceeding with save');
+        
+        // ==================== SAVE TO DISK ====================
+        
+        // Update the API in the list
+        const apiIndex = apis.apis.findIndex(a => a.id === apiId);
+        apis.apis[apiIndex] = body.api;
+        utils.saveApis(req.app, apis);
+        
+        // Save API config
+        utils.saveApiConfig(req.app, apiId, kongConfig);
+        utils.saveApiDesc(req.app, apiId, body.desc);
+        
+        // Handle swagger
+        let swagger = '';
+        let message = 'API saved successfully';
+        try {
+            swagger = JSON.parse(body.swagger);
+        } catch (err) {
+            try {
+                swagger = yaml.safeLoad(body.swagger);
+            } catch (err) {
+                swagger = body.swagger;
+                message = 'API saved but Swagger content is neither valid JSON nor valid YAML';
+            }
+        }
+        utils.saveSwagger(req.app, apiId, swagger);
+        
+        res.json({ 
+            success: true,
+            message: message,
+            apiId: apiId
+        });
+        
+    } catch (error) {
+        console.error('Error during API save:', error);
+        return res.status(500).json({
+            error: 'Internal server error',
+            details: error.message,
+            message: 'An error occurred while validating/saving the API'
+        });
     }
-    // Whatever we had, let's store it.
-    utils.saveSwagger(req.app, apiId, swagger);
-    res.json({ message: message });
 });
 
 module.exports = router;

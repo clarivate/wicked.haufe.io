@@ -1,0 +1,106 @@
+{
+    "api" : { 
+         "type" : "object",
+         "mandatory" : true,
+         "fields" : {
+            "upstream_url" : {
+                "type" :"string",
+                "mandatory": true
+            },
+            "name" : {
+                "type" :"string",
+                "mandatory": true
+            },
+            "routes" : {
+                "type" : "array",
+                "mandatory" : "true",
+                "elements": {
+                    "type": "object",
+                    "fields": {
+                        "strip_path": {
+                            "type": "boolean",
+                            "mandatory": false
+                        },
+                        "preserve_host": {
+                            "type": "boolean",
+                            "mandatory": false
+                        },
+                        "hosts": {
+                            "type" : "array",
+                            "mandatory" : false,
+                            "elements": {
+                                "type": "string"
+                            }
+                        },
+                        "headers": {
+                            "type": "object",
+                            "mandatory": false,
+                            "elements": {
+                                "type": "array",
+                                "elements": {
+                                    "type": "string"
+                                }
+                            }
+                        },
+                        "paths": {
+                            "type" : "array",
+                            "mandatory" : "true",
+                            "elements": {
+                                "type": "string"
+                            }
+                        },
+                        "protocols":{
+                            "type" : "array",
+                            "mandatory" : false,
+                            "elements": {
+                                "type": "string"
+                            }
+                        },
+                        "plugins" : {
+                            "type" :"array",
+                            "mandatory": false,
+                            "defaultValue" : [],
+                            "dependsOn" : "enable_routes"
+                        },
+                        "name":  {
+                            "type" :"string",
+                            "mandatory": false,
+                            "dependsOn" : "enable_routes"
+                        }
+                    }
+                }
+            },
+            "host":  {
+                "type" :"string",
+                "mandatory": true
+            },
+            "retries":  {
+                "type" :"number",
+                "mandatory": false
+            },
+            "connect_timeout": {
+                "type" :"number",
+                "mandatory": false
+            },
+            "write_timeout": {
+                "type" :"number",
+                "mandatory": false
+            },
+            "read_timeout": {
+                "type" :"number",
+                "mandatory": false
+            },
+            "enable_routes": {
+                "type" :"boolean",
+                "mandatory": false,
+                "default" : "false"
+            }
+        }
+    },
+    "plugins" : {
+        "type" :"array",
+        "mandatory": "true"
+    }
+}
+
+

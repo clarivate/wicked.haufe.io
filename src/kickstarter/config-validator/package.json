@@ -1,0 +1,24 @@
+{
+  "name": "config-validator",
+  "version": "1.0.0",
+  "description": "Validates the PR for wicked-config repo",
+  "main": "validate.js",
+  "dependencies": {
+    "aws-sdk": "^2.1098.0",
+    "axios": "^0.24.0",
+    "axios-oauth-client": "^1.4.4",
+    "axios-retry": "3.3.1",
+    "axios-token-interceptor": "^0.2.0",
+    "@octokit/rest": "^20.0.0"
+  },
+  "scripts": {
+    "validate": "node validate.js",
+    "test": "jest"
+  },
+  "author": "Clarivate analytics ",
+  "license": "ISC",
+  "devDependencies": {
+    "dotenv": "^16.0.0",
+    "jest": "^27.4.7"
+  }
+}

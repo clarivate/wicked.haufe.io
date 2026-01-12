@@ -1,0 +1,35 @@
+{
+    "apis":[
+        {
+            "id": "api1",
+            "name": "api1",
+            "desc": "API endpoint for the reviewer locator service",
+            "auth": "key-auth",
+            "tags": [],
+            "plans": [
+              "unlimited"
+            ],
+            "requiredGroup": "",
+            "registrationPool": "",
+            "authMethods": [],
+            "deprecated": false,
+            "businessSegment": "academia-and-government",
+            "productGroup": "Web of Science"
+          },
+          {
+            "id": "api1",
+            "name": "api1",
+            "desc": "API endpoint for the reviewer locator service",
+            "auth": "key-auth",
+            "tags": [],
+            "plans": [
+              "unlimited"
+            ]
+        },
+        {
+            "id": "api2",
+            "name": "api2",
+            "desc": "API endpoint for the reviewer locator service"
+        }
+    ]
+}
