@@ -299,7 +299,7 @@ function kongAction(method, inputUrl, body, expectedStatusCode, callback: Callba
             try {
                 callback(null, getJson(apiBody));
             } catch (parseErr) {
-                error(`kongAction: JSON parse failed for ${method} ${methodBody.url}`);
+                error(`kongAction: JSON parse failed for : ${method} ${methodBody.url}`);
                 error(`Response status: ${apiResponse.statusCode}`);
                 const errObj: any = new Error(`Kong returned invalid JSON for ${method} ${url}. Response may be HTML error page.`);
                 errObj.status = 502;
