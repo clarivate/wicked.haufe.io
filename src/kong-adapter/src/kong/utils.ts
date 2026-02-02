@@ -52,6 +52,7 @@ export function getJson(ob): object {
         if (ob === "")
             return null;
         return JSON.parse(ob);
+        
     }
     return ob;
 }
@@ -236,6 +237,8 @@ function kongAction(method, inputUrl, body, expectedStatusCode, callback: Callba
     if (url.startsWith('/'))
         url = inputUrl.substring(1);
     debug(`kongAction(): ${method} "${url}"`);
+    debug(`url  : ${url}`);
+    
     kongActionStat(method, url, body);
 
     // If for some reason, we think Kong is not available, tell the upstream
@@ -263,8 +266,11 @@ function kongAction(method, inputUrl, body, expectedStatusCode, callback: Callba
             error('curl -X ' + method + ' ' + methodBody.url);
     }
 
+
     function tryRequest(attempt: number) {
+        
         request(methodBody, function (err, apiResponse, apiBody) {
+            debug("[DEBUG] Calling Kong Admin URL:", methodBody.url);
             if (err) {
                 if (attempt > KONG_MAX_ATTEMPTS) {
                     error(`kongAction: Giving up after ${KONG_MAX_ATTEMPTS} attempts to send a request to Kong.`);
@@ -283,13 +289,23 @@ function kongAction(method, inputUrl, body, expectedStatusCode, callback: Callba
             if (expectedStatusCode != apiResponse.statusCode) {
                 const err: any = new Error('kongAction ' + method + ' on ' + url + ' did not return the expected status code (got: ' + apiResponse.statusCode + ', expected: ' + expectedStatusCode + ').');
                 err.status = apiResponse.statusCode;
-                debug(method + ' /' + url);
-                debug(methodBody);
-                debug(apiBody);
-                //console.error(apiBody);
+                debug(`Kong URL: ${method} ${methodBody.url}`);
+                debug('Request options: ' + JSON.stringify(methodBody));
+                debug('Response body: ' + (typeof apiBody === 'string' ? apiBody.substring(0, 500) : JSON.stringify(apiBody)));
                 return callback(err);
             }
-            callback(null, getJson(apiBody));
+            // Log the full URL for debugging
+            debug(`Kong request successful: ${method} ${methodBody.url}`);
+            try {
+                callback(null, getJson(apiBody));
+            } catch (parseErr) {
+                error(`kongAction: JSON parse failed for : ${method} ${methodBody.url}`);
+                error(`Response status: ${apiResponse.statusCode}`);
+                const errObj: any = new Error(`Kong returned invalid JSON for ${method} ${url}. Response may be HTML error page.`);
+                errObj.status = 502;
+                errObj.responseBody = typeof apiBody === 'string' ? apiBody.substring(0, 1000) : apiBody;
+                return callback(errObj);
+            }
         });
     }
 
