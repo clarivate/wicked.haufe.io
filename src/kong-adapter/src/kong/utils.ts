@@ -338,7 +338,7 @@ function kongPagingGet(url: string, callback: Callback<any>) {
                 dataArray.push(d);
             // console.log(result.data);
             if (result.next) {
-                pagingUrl = `${result.next}&size=${size}`;
+                pagingUrl = result.next;
             } else {
                 finished = true;
             }
