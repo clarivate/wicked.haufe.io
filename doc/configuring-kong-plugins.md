@@ -112,7 +112,8 @@ Other Kong Plugins can be used to achieve other behaviors, such as
 * Whitelisting
 * Blacklisting
 * Rate Limiting over data size
-* ...
+* According to the ACL plugin changelog, the blacklist and whitelist configuration parameters were removed as a breaking change in version 3.0.0.0
+* replace whitelist with allow, and (if you ever used it) blacklist with deny.
 
 ## Future Work
 
