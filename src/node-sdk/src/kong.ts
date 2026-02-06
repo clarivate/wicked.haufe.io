@@ -275,6 +275,7 @@ export function kongServiceRouteToApi(service: KongService, route: KongRoute): K
         retries: service.retries,
         connect_timeout: service.connect_timeout,
         read_timeout: service.read_timeout,
-        write_timeout: service.write_timeout
+        write_timeout: service.write_timeout,
+        regex_priority: route.regex_priority ?? 0
     };
 }
