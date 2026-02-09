@@ -130,7 +130,7 @@ export function kongApiToServiceAndRoutes(api: KongApi): { service: KongService,
 
             const route: KongRoute = {
                 protocols: translateProtocols(item.protocols),
-                regex_priority: 0,
+                regex_priority: item.regex_priority ?? 0,
                 strip_path: item.strip_path,
                 preserve_host: item.preserve_host,
                 service: {
@@ -169,7 +169,7 @@ export function kongApiToServiceAndRoutes(api: KongApi): { service: KongService,
           protocols: [ProtocolType.http, ProtocolType.https],
           paths: api.uris,
           methods: null,
-          regex_priority: 0,
+          regex_priority: api.regex_priority ?? 0,
           strip_path: api.strip_uri,
           preserve_host: api.preserve_host,
           service: {
@@ -217,7 +217,7 @@ export function kongApiToServiceRoute(api: KongApi): { service: KongService, rou
         protocols: [ProtocolType.http, ProtocolType.https],
         paths: api.uris,
         methods: null,
-        regex_priority: 0,
+        regex_priority: api.regex_priority ?? 0,
         strip_path: api.strip_uri,
         preserve_host: api.preserve_host,
         service: {
@@ -275,6 +275,7 @@ export function kongServiceRouteToApi(service: KongService, route: KongRoute): K
         retries: service.retries,
         connect_timeout: service.connect_timeout,
         read_timeout: service.read_timeout,
-        write_timeout: service.write_timeout
+        write_timeout: service.write_timeout,
+        regex_priority: route.regex_priority ?? 0
     };
 }
