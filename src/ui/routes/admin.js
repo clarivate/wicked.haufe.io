@@ -92,7 +92,7 @@ router.post('/approvals/approve', function (req, res, next) {
 
 
             // If the API has wos custom headers, then we need to send a request to the Clarivate component to create custom headers for the user
-           /* if (apiBody.woscontractedHeadervalues) {
+           if (apiBody.woscontractedHeadervalues) {
                 const useremail = approvalInfo.user.email;
                 const subscribeResponse = { statusCode: apiResponse.statusCode, data: apiBody.woscontractedHeadervalues };
 
@@ -119,7 +119,7 @@ router.post('/approvals/approve', function (req, res, next) {
                         });
                     }, 3000); // 3000 milliseconds delay
                 }
-            }*/
+            }
             // End of custom header creation
         });
     });
