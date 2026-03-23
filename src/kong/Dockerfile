@@ -1,4 +1,4 @@
-FROM kong:1.5.1-alpine
+FROM kong:3.9.1-ubuntu
 #FROM kong:0.14.1-centos
 
 ENV KONG_PG_HOST kong-database

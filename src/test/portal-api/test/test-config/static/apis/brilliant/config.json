@@ -10,7 +10,7 @@
             "name": "acl",
             "enabled": true,
             "config": {
-                "whitelist": [
+                "allow": [
                     "api-consumer",
                     "api-abuser"
                 ]
