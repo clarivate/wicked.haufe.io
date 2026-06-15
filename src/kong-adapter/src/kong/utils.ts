@@ -1,4 +1,5 @@
-'use strict';
+
+​'use strict';
 
 const request = require('request');
 const { debug, info, warn, error } = require('portal-env').Logger('kong-adapter:utils');
@@ -631,6 +632,9 @@ export function kongPostApi(apiConfig: KongApi, callback: Callback<KongApi>): vo
     debug('kongPostApi()');
     const { service, routes } = wicked.kongApiToServiceAndRoutes(apiConfig);
 
+    if ((apiConfig as any).tags)
+        (service as any).tags = (apiConfig as any).tags;
+
     if(!service.retries && apiConfig.hasOwnProperty('retries'))
         {
             //overriding retries value from wicked-sdk function , prevents retries being null when '0' in apiConfig
@@ -722,6 +726,9 @@ export function kongPatchApi(apiId: string, apiConfig: KongApi, callback: Callba
     debug('apiConfig: ' + JSON.stringify(apiConfig, null, 2));
 
     const { service, routes } = wicked.kongApiToServiceAndRoutes(apiConfig);
+
+    if ((apiConfig as any).tags)
+        (service as any).tags = (apiConfig as any).tags;
 
     if(!service.retries && apiConfig.hasOwnProperty('retries'))
         {
