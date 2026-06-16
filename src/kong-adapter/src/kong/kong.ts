@@ -175,7 +175,7 @@ export const kong = {
             if (apiUpdateNeeded) {
                 debug("API '" + portalApi.name + "' does not match.");
                 info(`Detected change, patching API definition for API ${portalApi.name} (${kongApi.api.id})`);
-const apiConfig = portalApi.config.api;
+                const apiConfig = portalApi.config.api;
                 if (metadataChanged) {
                     const tags = buildServiceTags(portalApi);
                     apiConfig.tags = tags ? tags : [];
