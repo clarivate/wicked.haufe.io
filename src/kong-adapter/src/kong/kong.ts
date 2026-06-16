@@ -22,6 +22,7 @@ function buildServiceTags(portalApi: any): string[] | undefined {
         tags.push(`business_segment:${portalApi.businessSegment}`);
     if (portalApi.productGroup)
         tags.push(`product_group:${portalApi.productGroup}`);
+    debug('tags--->'+tags);
     return tags.length > 0 ? tags : undefined;
 }
 
@@ -100,7 +101,8 @@ export const kong = {
 
             const apiConfig = addItem.portalApi.config.api;
             apiConfig.tags = buildServiceTags(addItem.portalApi);
-            
+            debug('apiConfig--->'+apiConfig);
+            debug('addList--->'+JSON.stringify(addList));
             utils.kongPostApi(addItem.portalApi.config.api, function (err, apiResponse) {
                 if (err)
                     return done(err);
@@ -159,7 +161,9 @@ export const kong = {
             const portalApi = updateItem.portalApi;
             const kongApi = updateItem.kongApi;
             const metadataChanged = businessMetadataChanged(portalApi, kongApi);
-
+            debug('metadataChanged'+metadataChanged);
+            debug('updateList--->'+JSON.stringify(updateList));
+            debug('portalApi--->'+portalApi);
 
             debug('portalApi: ' + JSON.stringify(portalApi.config.api, null, 2));
             debug('kongApi: ' + JSON.stringify(kongApi.api, null, 2));
