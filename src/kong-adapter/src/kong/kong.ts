@@ -15,37 +15,17 @@ const MAX_PARALLEL_CALLS = 10;
 const KONG_BATCH_SIZE = 100; // Used when wiping the consumers
 const RATE_LIMITING = 'rate-limiting';
 const ROTATE_KEY='rotate-key';
-
+//
 function buildServiceTags(portalApi: any): string[] | undefined {
     const tags: string[] = [];
     if (portalApi.businessSegment)
         tags.push(`business_segment:${portalApi.businessSegment}`);
     if (portalApi.productGroup)
         tags.push(`product_group:${portalApi.productGroup}`);
-    debug('tags--->'+tags);
     return tags.length > 0 ? tags : undefined;
 }
 
-function getTagValue(tags: string[] | undefined, key: string): string | undefined {
-    if (!tags)
-        return undefined;
-    const prefix = `${key}:`;
-    for (let i = 0; i < tags.length; ++i) {
-        if (tags[i].indexOf(prefix) === 0)
-            return tags[i].substring(prefix.length);
-    }
-    return undefined;
-}
 
-function businessMetadataChanged(portalApi: any, kongApi: KongApiConfig): boolean {
-    const portalBusinessSegment = portalApi.businessSegment || undefined;
-    const portalProductGroup = portalApi.productGroup || undefined;
-    const kongTags = (kongApi.api as any).tags as string[] | undefined;
-    const kongBusinessSegment = getTagValue(kongTags, 'business_segment');
-    const kongProductGroup = getTagValue(kongTags, 'product_group');
-
-    return portalBusinessSegment !== kongBusinessSegment || portalProductGroup !== kongProductGroup;
-}
 
 export const kong = {
     getKongApis: function (callback: Callback<KongApiConfigCollection>): void {
@@ -101,8 +81,7 @@ export const kong = {
 
             const apiConfig = addItem.portalApi.config.api;
             apiConfig.tags = buildServiceTags(addItem.portalApi);
-            debug('apiConfig--->'+apiConfig);
-            debug('addList--->'+JSON.stringify(addList));
+            
             utils.kongPostApi(addItem.portalApi.config.api, function (err, apiResponse) {
                 if (err)
                     return done(err);
@@ -160,10 +139,6 @@ export const kong = {
         async.eachSeries(updateList, function (updateItem: UpdateApiItem, callback) {
             const portalApi = updateItem.portalApi;
             const kongApi = updateItem.kongApi;
-            const metadataChanged = businessMetadataChanged(portalApi, kongApi);
-            debug('metadataChanged'+metadataChanged);
-            debug('updateList--->'+JSON.stringify(updateList));
-            debug('portalApi--->'+portalApi);
 
             debug('portalApi: ' + JSON.stringify(portalApi.config.api, null, 2));
             debug('kongApi: ' + JSON.stringify(kongApi.api, null, 2));
@@ -173,17 +148,17 @@ export const kong = {
                 enable_routes = apiConfig.enable_routes;
                 delete portalApi.config.api.enable_routes;
             }
-            const apiUpdateNeeded = metadataChanged || !utils.matchObjects(portalApi.config.api, kongApi.api);
+            
+            // Always build and assign tags upfront so they're included in comparison
+            const tags = buildServiceTags(portalApi);
+            apiConfig.tags = tags ? tags : [];
+            
+            const apiUpdateNeeded = !utils.matchObjects(portalApi.config.api, kongApi.api);
 
 
             if (apiUpdateNeeded) {
                 debug("API '" + portalApi.name + "' does not match.");
                 info(`Detected change, patching API definition for API ${portalApi.name} (${kongApi.api.id})`);
-                const apiConfig = portalApi.config.api;
-                if (metadataChanged) {
-                    const tags = buildServiceTags(portalApi);
-                    apiConfig.tags = tags ? tags : [];
-                }                
                 utils.kongPatchApi(kongApi.api.id, portalApi.config.api, function (err, patchResult) {
                     if (err)
                         return callback(err);
