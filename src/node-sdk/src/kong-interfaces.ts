@@ -22,7 +22,8 @@ export interface KongApi {
     upstream_url: string,
     routes?: KongRoute[],
     enable_routes?: boolean,
-    regex_priority?: number
+    regex_priority?: number,
+    tags?: string[]
 }
 
 export enum ProtocolType {

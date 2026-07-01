@@ -15,6 +15,14 @@ const KONG_BATCH_SIZE = 100; // Used when wiping the consumers
 const RATE_LIMITING = 'rate-limiting'
 const ROTATE_KEY='rotate-key';
 
+function buildServiceTags(portalApi: any): string[] | undefined {
+    const tags: string[] = [];
+    if (portalApi.businessSegment)
+        tags.push(`business_segment:${portalApi.businessSegment}`);
+    if (portalApi.productGroup)
+        tags.push(`product_group:${portalApi.productGroup}`);
+    return tags.length > 0 ? tags : undefined;
+}
 export const kong = {
     getKongApis: function (callback: Callback<KongApiConfigCollection>): void {
         debug('kong.getKongApis()');
@@ -66,6 +74,8 @@ export const kong = {
         // - portalApi: The portal's API definition, including plugins
         async.eachSeries(addList, function (addItem: AddApiItem, callback) {
             info(`Creating new API in Kong: ${addItem.portalApi.id}`);
+            const apiConfig = addItem.portalApi.config.api;
+            apiConfig.tags = buildServiceTags(addItem.portalApi);
             utils.kongPostApi(addItem.portalApi.config.api, function (err, apiResponse) {
                 if (err)
                     return done(err);
@@ -132,6 +142,8 @@ export const kong = {
                 enable_routes = apiConfig.enable_routes;
                 delete portalApi.config.api.enable_routes;
             }
+            const tags = buildServiceTags(portalApi);
+            apiConfig.tags = tags ? tags : [];
             const apiUpdateNeeded = !utils.matchObjects(portalApi.config.api, kongApi.api);
 
             if (apiUpdateNeeded) {
