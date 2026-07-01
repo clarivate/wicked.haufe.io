@@ -319,7 +319,11 @@ function kongGet(url: string, callback: Callback<any>) {
 
 function kongPagingGet(url: string, callback: Callback<any>) {
     let pagingUrl;
-    pagingUrl = url;
+    const size = 1000;
+    if (url.indexOf('?') > 0)
+        pagingUrl = `${url}&size=${size}`;
+    else
+        pagingUrl = `${url}?size=${size}`;
     console.log(pagingUrl);
     const dataArray = [];
     let finished = false;
