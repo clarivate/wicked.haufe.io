@@ -610,6 +610,8 @@ export function kongGetApiPlugins(apiId: string, callback: Callback<KongCollecti
 export function kongPostApi(apiConfig: KongApi, callback: Callback<KongApi>): void {
     debug('kongPostApi()');
     const { service, routes } = wicked.kongApiToServiceAndRoutes(apiConfig);
+    if ((apiConfig as any).tags)
+        (service as any).tags = (apiConfig as any).tags;
 
     if(!service.retries && apiConfig.hasOwnProperty('retries'))
         {
@@ -702,6 +704,8 @@ export function kongPatchApi(apiId: string, apiConfig: KongApi, callback: Callba
     debug('apiConfig: ' + JSON.stringify(apiConfig, null, 2));
 
     const { service, routes } = wicked.kongApiToServiceAndRoutes(apiConfig);
+    if ((apiConfig as any).tags)
+        (service as any).tags = (apiConfig as any).tags;
 
     if(!service.retries && apiConfig.hasOwnProperty('retries'))
         {
