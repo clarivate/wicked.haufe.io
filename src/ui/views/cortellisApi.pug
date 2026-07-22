@@ -212,10 +212,8 @@ block content
 
                                             else if app.maySubscribe 
                                                 td
-                                                    a(href=`/applications/${app.id}/subscribe/${apiInfo.id}`) 
-                                                        button(type='submit', id='subscribeButton', class='btn btn-success btn-block', value=`${app.disbaleSubscriptionBtn}`) Subscribe &raquo;
-
-                                            
+                                                    form(action=`/applications/${app.id}/subscribe/${apiInfo.id}` method='GET')
+                                                        button(type='submit', id='subscribeButton', class='btn btn-success btn-block', value=`${app.disbaleSubscriptionBtn}`, disabled=app.disbaleSubscriptionBtn === true, style=`${app.disbaleSubscriptionBtn === true ? 'opacity: 0.6; cursor: not-allowed;' : ''}`) Subscribe &raquo;
                                             else if app.subscribeError
                                                 td
                                                     i= app.subscribeError
