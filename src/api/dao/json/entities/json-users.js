@@ -368,6 +368,11 @@ class JsonUsers {
             JSON.stringify(userIndex, null, 2),
             'utf8');
     }
+
+    cascadeUserFields(userId, newEmail, newCustomId, callback) {
+        debug(`cascadeUserFields(${userId}) - no-op for JSON DAO`);
+        return callback(null);
+    }
 }
 
 module.exports = JsonUsers;

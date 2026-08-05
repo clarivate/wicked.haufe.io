@@ -460,6 +460,21 @@ export const utils = {
         }
     },
 
+    getUserByEmail: async function (email: string): Promise<WickedUserShortInfo> {
+        debug(`getUserByEmail(${email})`);
+        try {
+            const shortInfoList = await wicked.getUserByEmail(email);
+            if (!Array.isArray(shortInfoList) || shortInfoList.length <= 0 || !shortInfoList[0].id)
+                return null;
+            return shortInfoList[0];
+        } catch (err) {
+            if (err.statusCode == 404) {
+                return null;
+            }
+            throw err;
+        }
+    },
+
     /**
      * Returns `true` if the user has an established session with the given `authMethodId`. The function
      * also checks whether the user has a "profile, which is required if the user is truly logged in.

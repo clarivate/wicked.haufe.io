@@ -179,6 +179,44 @@ class PgUsers {
             customId: userInfo.customId
         };
     }
+
+    // Update email and/or customId in owners and registrations tables to keep them in sync
+    cascadeUserFields(userId, newEmail, newCustomId, callback) {
+        debug(`cascadeUserFields(${userId}, email: ${newEmail}, customId: ${newCustomId})`);
+        this.pgUtils.getPoolOrClient((err, pool) => {
+            if (err) {
+                return callback(err);
+            }
+            const setClauses = [];
+            const params = [];
+            let paramIdx = 1;
+            if (newEmail) {
+                setClauses.push(`data = jsonb_set(data, '{email}', $${paramIdx}::jsonb)`);
+                params.push(JSON.stringify(newEmail));
+                paramIdx++;
+            }
+            if (newCustomId) {
+                setClauses.push(`data = jsonb_set(data, '{customId}', $${paramIdx}::jsonb)`);
+                params.push(JSON.stringify(newCustomId));
+                paramIdx++;
+            }
+            const setString = setClauses.join(', ');
+            const userIdParam = `$${paramIdx}`;
+            params.push(userId);
+            const sql = `
+                UPDATE wicked.owners SET ${setString} WHERE users_id = ${userIdParam};
+                UPDATE wicked.registrations SET ${setString} WHERE users_id = ${userIdParam};
+            `;
+            pool.query(sql, params, (err) => {
+                if (err) {
+                    error(`cascadeUserFields: Failed for user ${userId}: ${err.message}`);
+                    return callback(err);
+                }
+                info(`cascadeUserFields: Cascaded updates to owners and registrations for user ${userId}`);
+                return callback(null);
+            });
+        });
+    }
 }
 
 module.exports = PgUsers;
