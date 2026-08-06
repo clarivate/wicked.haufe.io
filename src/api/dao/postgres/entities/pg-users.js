@@ -179,6 +179,49 @@ class PgUsers {
             customId: userInfo.customId
         };
     }
+
+    // Cascade email to owners+registrations; customId only to registrations
+    cascadeUserFields(userId, newEmail, newCustomId, callback) {
+        debug(`cascadeUserFields(${userId}, email: ${newEmail}, customId: ${newCustomId})`);
+        this.pgUtils.getPoolOrClient((err, pool) => {
+            if (err) {
+                return callback(err);
+            }
+            const params = [];
+            const statements = [];
+            let paramIdx = 1;
+
+            const emailParamIdx = newEmail ? paramIdx++ : null;
+            if (newEmail) params.push(JSON.stringify(newEmail));
+
+            const customIdParamIdx = newCustomId ? paramIdx++ : null;
+            if (newCustomId) params.push(JSON.stringify(newCustomId));
+
+            const userIdParamIdx = paramIdx;
+            params.push(userId);
+
+            if (newEmail) {
+                statements.push(`UPDATE wicked.owners SET data = jsonb_set(data, '{email}', $${emailParamIdx}::jsonb) WHERE users_id = $${userIdParamIdx}`);
+            }
+
+            const regClauses = [];
+            if (newEmail) regClauses.push(`data = jsonb_set(data, '{email}', $${emailParamIdx}::jsonb)`);
+            if (newCustomId) regClauses.push(`data = jsonb_set(data, '{customId}', $${customIdParamIdx}::jsonb)`);
+            if (regClauses.length > 0) {
+                statements.push(`UPDATE wicked.registrations SET ${regClauses.join(', ')} WHERE users_id = $${userIdParamIdx}`);
+            }
+
+            const sql = statements.join(';\n');
+            pool.query(sql, params, (err) => {
+                if (err) {
+                    error(`cascadeUserFields: Failed for user ${userId}: ${err.message}`);
+                    return callback(err);
+                }
+                info(`cascadeUserFields: Cascaded updates to owners and registrations for user ${userId}`);
+                return callback(null);
+            });
+        });
+    }
 }
 
 module.exports = PgUsers;
