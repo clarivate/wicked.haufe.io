@@ -180,33 +180,38 @@ class PgUsers {
         };
     }
 
-    // Update email and/or customId in owners and registrations tables to keep them in sync
+    // Cascade email to owners+registrations; customId only to registrations
     cascadeUserFields(userId, newEmail, newCustomId, callback) {
         debug(`cascadeUserFields(${userId}, email: ${newEmail}, customId: ${newCustomId})`);
         this.pgUtils.getPoolOrClient((err, pool) => {
             if (err) {
                 return callback(err);
             }
-            const setClauses = [];
             const params = [];
+            const statements = [];
             let paramIdx = 1;
-            if (newEmail) {
-                setClauses.push(`data = jsonb_set(data, '{email}', $${paramIdx}::jsonb)`);
-                params.push(JSON.stringify(newEmail));
-                paramIdx++;
-            }
-            if (newCustomId) {
-                setClauses.push(`data = jsonb_set(data, '{customId}', $${paramIdx}::jsonb)`);
-                params.push(JSON.stringify(newCustomId));
-                paramIdx++;
-            }
-            const setString = setClauses.join(', ');
-            const userIdParam = `$${paramIdx}`;
+
+            const emailParamIdx = newEmail ? paramIdx++ : null;
+            if (newEmail) params.push(JSON.stringify(newEmail));
+
+            const customIdParamIdx = newCustomId ? paramIdx++ : null;
+            if (newCustomId) params.push(JSON.stringify(newCustomId));
+
+            const userIdParamIdx = paramIdx;
             params.push(userId);
-            const sql = `
-                UPDATE wicked.owners SET ${setString} WHERE users_id = ${userIdParam};
-                UPDATE wicked.registrations SET ${setString} WHERE users_id = ${userIdParam};
-            `;
+
+            if (newEmail) {
+                statements.push(`UPDATE wicked.owners SET data = jsonb_set(data, '{email}', $${emailParamIdx}::jsonb) WHERE users_id = $${userIdParamIdx}`);
+            }
+
+            const regClauses = [];
+            if (newEmail) regClauses.push(`data = jsonb_set(data, '{email}', $${emailParamIdx}::jsonb)`);
+            if (newCustomId) regClauses.push(`data = jsonb_set(data, '{customId}', $${customIdParamIdx}::jsonb)`);
+            if (regClauses.length > 0) {
+                statements.push(`UPDATE wicked.registrations SET ${regClauses.join(', ')} WHERE users_id = $${userIdParamIdx}`);
+            }
+
+            const sql = statements.join(';\n');
             pool.query(sql, params, (err) => {
                 if (err) {
                     error(`cascadeUserFields: Failed for user ${userId}: ${err.message}`);
