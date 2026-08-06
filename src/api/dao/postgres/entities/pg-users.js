@@ -2,6 +2,8 @@
 
 const { debug, info, warn, error } = require('portal-env').Logger('portal-api:dao:pg:users');
 
+const async = require('async');
+
 const utils = require('../../../routes/utils');
 const daoUtils = require('../../dao-utils');
 
@@ -188,7 +190,6 @@ class PgUsers {
                 return callback(err);
             }
             const params = [];
-            const statements = [];
             let paramIdx = 1;
 
             const emailParamIdx = newEmail ? paramIdx++ : null;
@@ -200,26 +201,46 @@ class PgUsers {
             const userIdParamIdx = paramIdx;
             params.push(userId);
 
+            // Note: each statement has to be run as its own query; postgres rejects
+            // multi-command strings when parameters are used (extended query protocol).
+            const statements = [];
             if (newEmail) {
-                statements.push(`UPDATE wicked.owners SET data = jsonb_set(data, '{email}', $${emailParamIdx}::jsonb) WHERE users_id = $${userIdParamIdx}`);
+                statements.push({
+                    table: 'owners',
+                    sql: `UPDATE wicked.owners SET data = jsonb_set(data, '{email}', $${emailParamIdx}::jsonb) WHERE users_id = $${userIdParamIdx}`
+                });
             }
 
             const regClauses = [];
             if (newEmail) regClauses.push(`data = jsonb_set(data, '{email}', $${emailParamIdx}::jsonb)`);
             if (newCustomId) regClauses.push(`data = jsonb_set(data, '{customId}', $${customIdParamIdx}::jsonb)`);
             if (regClauses.length > 0) {
-                statements.push(`UPDATE wicked.registrations SET ${regClauses.join(', ')} WHERE users_id = $${userIdParamIdx}`);
+                statements.push({
+                    table: 'registrations',
+                    sql: `UPDATE wicked.registrations SET ${regClauses.join(', ')} WHERE users_id = $${userIdParamIdx}`
+                });
             }
 
-            const sql = statements.join(';\n');
-            pool.query(sql, params, (err) => {
-                if (err) {
-                    error(`cascadeUserFields: Failed for user ${userId}: ${err.message}`);
-                    return callback(err);
-                }
-                info(`cascadeUserFields: Cascaded updates to owners and registrations for user ${userId}`);
+            if (statements.length === 0) {
+                debug('cascadeUserFields: Nothing to cascade.');
                 return callback(null);
-            });
+            }
+
+            // Fire and forget: each table is updated independently, so a failure on one
+            // does not prevent the other from being updated. Errors are logged and
+            // returned for logging purposes only; callers do not act on them.
+            let firstErr = null;
+            async.each(statements, (statement, nextStatement) => {
+                pool.query(statement.sql, params, (err, result) => {
+                    if (err) {
+                        error(`cascadeUserFields: Failed to update ${statement.table} for user ${userId}: ${err.message}`);
+                        firstErr = firstErr || err;
+                    } else {
+                        info(`cascadeUserFields: Updated ${result.rowCount} row(s) in ${statement.table} for user ${userId}`);
+                    }
+                    return nextStatement(null);
+                });
+            }, () => callback(firstErr));
         });
     }
 }
