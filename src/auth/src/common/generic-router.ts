@@ -1532,21 +1532,22 @@ export class GenericOAuth2Router {
         // create a federated user record in case we have a good valid 3rd party user,
         // which we want to track in the user database of wicked.
         async function loadWickedUser(userId) {
-            debug(`loadWickedUser(${userId})`);
+            
+            debug(`Inside loadWickedUser(${userId})`);
             const userInfo = await wicked.getUser(userId);
-            debug('loadUserAndProfile returned.');
+            debug('Inside loadUserAndProfile returned.');
 
             // Sync primary email from 1p:peml if it has changed
             const primaryEmail = authResponse.defaultProfile ? authResponse.defaultProfile['1p:peml'] : null;
             const patchData: any = {};
             if (primaryEmail && userInfo.email !== primaryEmail) {
-                info(`loadWickedUser: Updating email for user ${userId} from "${userInfo.email}" to "${primaryEmail}" (1p:peml)`);
+                debug(`Inside loadWickedUser: Updating email for user ${userId} from "${userInfo.email}" to "${primaryEmail}" (1p:peml)`);
                 userInfo.email = primaryEmail;
                 patchData.email = primaryEmail;
             }
             // Sync customId if 1p:truid has changed
             if (authResponse.customId && userInfo.customId !== authResponse.customId) {
-                info(`loadWickedUser: Updating customId for user ${userId} from "${userInfo.customId}" to "${authResponse.customId}"`);
+                debug(`Inside loadWickedUser: Updating customId for user ${userId} from "${userInfo.customId}" to "${authResponse.customId}"`);
                 userInfo.customId = authResponse.customId;
                 patchData.customId = authResponse.customId;
             }
@@ -1569,11 +1570,13 @@ export class GenericOAuth2Router {
 
         if (authResponse.userId) {
             // We already have a wicked user id, load the user and fill the profile
+            debug('Inside authresponse.userId, loading wicked user...', authResponse.userId);
             return loadWickedUser(authResponse.userId);
         } else if (authResponse.customId) {
             // Let's check the custom ID, load by custom ID
+            debug('Inside authresponse.customId, loading wicked user by customId...', authResponse.customId);
             let shortInfo = await utils.getUserByCustomId(authResponse.customId);
-            if (!shortInfo) {
+            /*if (!shortInfo) {
                 // customId not found; 1p:truid may have changed, try finding by primary email
                 const primaryEmail = authResponse.defaultProfile ? authResponse.defaultProfile['1p:peml'] : null;
                 if (primaryEmail) {
@@ -1586,7 +1589,7 @@ export class GenericOAuth2Router {
                         shortInfo = await utils.getUserByEmail(loginEmail);
                     }
                 }
-            }
+            }*/
             if (!shortInfo) {
                 // Not found, we must create first
                 await instance.createUserFromDefaultProfile(authResponse);
@@ -1641,12 +1644,7 @@ export class GenericOAuth2Router {
             error(err);
             // 409 means a user with this email already exists; resolve by finding that user
             if (err.status === 409 || err.statusCode === 409) {
-                info(`createUserFromDefaultProfile: User with email "${userCreateInfo.email}" already exists, resolving conflict`);
-                const existingUser = await utils.getUserByEmail(userCreateInfo.email);
-                if (existingUser) {
-                    authResponse.userId = existingUser.id;
-                    return authResponse;
-                }
+                debug('Inside 409createUserFromDefaultProfile: User with this email already exists, trying to find that user...');
                 throw makeError(`A user with the email address "${userCreateInfo.email}" already exists in the system. Please log in using the existing user's identity.`, 409);
             }
             throw err;
