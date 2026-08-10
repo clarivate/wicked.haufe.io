@@ -1586,7 +1586,7 @@ export class GenericOAuth2Router {
                     }
                 }
                 // If both peml and truid changed, try the login email (1p:eml) as last resort
-                /*if (!shortInfo && authResponse.defaultProfile && authResponse.defaultProfile.email) {
+                if (!shortInfo && authResponse.defaultProfile && authResponse.defaultProfile.email) {
                     const loginEmail = authResponse.defaultProfile.email;
                     if (loginEmail !== primaryEmail) {
                         shortInfo = await utils.getUserByEmail(loginEmail);
@@ -1594,7 +1594,7 @@ export class GenericOAuth2Router {
                             info(`checkUserFromAuthResponse: customId "${authResponse.customId}" not found; matched user ${shortInfo.id} by login email (1p:eml). customId will be synced.`);
                         }
                     }
-                }*/
+                }
             }
             if (!shortInfo) {
                 // Not found, we must create first
