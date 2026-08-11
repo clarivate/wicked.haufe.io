@@ -1552,7 +1552,7 @@ export class GenericOAuth2Router {
                 patchData.customId = authResponse.customId;
             }
             if (Object.keys(patchData).length > 0) {
-                wicked.patchUser(userId, patchData).catch(err => {
+                await wicked.patchUser(userId, patchData).catch(err => {
                     error(`loadWickedUser: Failed to patch user ${userId}: ${err.message || err}`);
                 });
             }

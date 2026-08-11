@@ -162,8 +162,11 @@ function getActualApis(callback: Callback<ApiDescriptionCollection>) {
     debug('getActualApis()');
     const now = (new Date()).getTime();
     if (now - _actualApisDate < REFRESH_API_INTERVAL) {
-        if (_actualApis)
+            debug('getActualApis(): using cached APIs');
+        if (_actualApis){
+            debug('getActualApis(): returning cached APIs');
             return callback(null, _actualApis);
+        }
     }
     wicked.getApis(function (err, apiList) {
         if (err)
