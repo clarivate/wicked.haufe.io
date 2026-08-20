@@ -1534,8 +1534,22 @@ export class GenericOAuth2Router {
         async function loadWickedUser(userId) {
             debug(`loadWickedUser(${userId})`);
             const userInfo = await wicked.getUser(userId);
-            debug('loadUserAndProfile returned.');
-
+            const primaryEmail = authResponse.defaultProfile ? authResponse.defaultProfile['1p:peml'] : null;
+            const patchData: any = {};
+            if (primaryEmail && userInfo.email !== primaryEmail) {
+                userInfo.email = primaryEmail;
+                patchData.email = primaryEmail;
+            }
+            // Sync customId if 1p:truid has changed
+            if (authResponse.customId && userInfo.customId !== authResponse.customId) {
+                userInfo.customId = authResponse.customId;
+                patchData.customId = authResponse.customId;
+            }
+            if (Object.keys(patchData).length > 0) {
+                await wicked.patchUser(userId, patchData).catch(err => {
+                    error(`loadWickedUser: Failed to patch user ${userId}: ${err.message || err}`);
+                });
+            }
             // This just fills userId.
             // The rest is done when handling the registrations (see
             // registrationFlow()).
@@ -1552,7 +1566,27 @@ export class GenericOAuth2Router {
             return loadWickedUser(authResponse.userId);
         } else if (authResponse.customId) {
             // Let's check the custom ID, load by custom ID
-            const shortInfo = await utils.getUserByCustomId(authResponse.customId);
+            let shortInfo = await utils.getUserByCustomId(authResponse.customId);
+            if (!shortInfo) {
+                // customId not found; 1p:truid may have changed, try finding by primary email
+                const primaryEmail = authResponse.defaultProfile ? authResponse.defaultProfile['1p:peml'] : null;
+                if (primaryEmail) {
+                    shortInfo = await utils.getUserByEmail(primaryEmail);
+                    if (shortInfo) {
+                        info(`checkUserFromAuthResponse: customId "${authResponse.customId}" not found; matched user ${shortInfo.id} by primary email (1p:peml). customId will be synced.`);
+                    }
+                }
+                // If both peml and truid changed, try the login email (1p:eml) as last resort
+                if (!shortInfo && authResponse.defaultProfile && authResponse.defaultProfile.email) {
+                    const loginEmail = authResponse.defaultProfile.email;
+                    if (loginEmail !== primaryEmail) {
+                        shortInfo = await utils.getUserByEmail(loginEmail);
+                        if (shortInfo) {
+                            info(`checkUserFromAuthResponse: customId "${authResponse.customId}" not found; matched user ${shortInfo.id} by login email (1p:eml). customId will be synced.`);
+                        }
+                    }
+                }
+            }
             if (!shortInfo) {
                 // Not found, we must create first
                 await instance.createUserFromDefaultProfile(authResponse);
