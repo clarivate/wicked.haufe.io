@@ -69,7 +69,8 @@ dao.users = {
     delete: (userId, deletingUserId, callback) => { dao._impl.users.delete(userId, deletingUserId, callback); },
 
     getIndex: (offset, limit, callback) => { dao._impl.users.getIndex(offset, limit, callback); },
-    getCount: (callback) => { dao._impl.users.getCount(callback); }
+    getCount: (callback) => { dao._impl.users.getCount(callback); },
+    cascadeUserFields: (userId, newEmail, newCustomId, callback) => { dao._impl.users.cascadeUserFields(userId, newEmail, newCustomId, callback); }
 };
 
 dao.applications = {

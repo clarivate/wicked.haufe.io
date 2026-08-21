@@ -4,6 +4,7 @@ const { debug, info, warn, error } = require('portal-env').Logger('portal-api:da
 
 const utils = require('../../../routes/utils');
 const daoUtils = require('../../dao-utils');
+const async = require('async');
 
 class PgUsers {
     constructor(pgUtils) {
@@ -179,6 +180,67 @@ class PgUsers {
             customId: userInfo.customId
         };
     }
+    // Cascade email to owners+registrations; customId only to registrations
+        cascadeUserFields(userId, newEmail, newCustomId, callback) {
+            debug(`cascadeUserFields(${userId}, email: ${newEmail}, customId: ${newCustomId})`);
+            this.pgUtils.getPoolOrClient((err, pool) => {
+                if (err) {
+                    return callback(err);
+                }
+                const params = [];
+                let paramIdx = 1;
+    
+                const emailParamIdx = newEmail ? paramIdx++ : null;
+                if (newEmail) params.push(JSON.stringify(newEmail));
+    
+                const customIdParamIdx = newCustomId ? paramIdx++ : null;
+                if (newCustomId) params.push(JSON.stringify(newCustomId));
+    
+                const userIdParamIdx = paramIdx;
+                params.push(userId);
+    
+                // Note: each statement has to be run as its own query; postgres rejects
+                // multi-command strings when parameters are used (extended query protocol).
+                const statements = [];
+                if (newEmail) {
+                    statements.push({
+                        table: 'owners',
+                        sql: `UPDATE wicked.owners SET data = jsonb_set(data, '{email}', $${emailParamIdx}::jsonb) WHERE users_id = $${userIdParamIdx}`
+                    });
+                }
+    
+                const regClauses = [];
+                if (newEmail) regClauses.push(`data = jsonb_set(data, '{email}', $${emailParamIdx}::jsonb)`);
+                if (newCustomId) regClauses.push(`data = jsonb_set(data, '{customId}', $${customIdParamIdx}::jsonb)`);
+                if (regClauses.length > 0) {
+                    statements.push({
+                        table: 'registrations',
+                        sql: `UPDATE wicked.registrations SET ${regClauses.join(', ')} WHERE users_id = $${userIdParamIdx}`
+                    });
+                }
+    
+                if (statements.length === 0) {
+                    debug('cascadeUserFields: Nothing to cascade.');
+                    return callback(null);
+                }
+    
+                // Fire and forget: each table is updated independently, so a failure on one
+                // does not prevent the other from being updated. Errors are logged and
+                // returned for logging purposes only; callers do not act on them.
+                let firstErr = null;
+                async.each(statements, (statement, nextStatement) => {
+                    pool.query(statement.sql, params, (err, result) => {
+                        if (err) {
+                            error(`cascadeUserFields: Failed to update ${statement.table} for user ${userId}: ${err.message}`);
+                            firstErr = firstErr || err;
+                        } else {
+                            info(`cascadeUserFields: Updated ${result.rowCount} row(s) in ${statement.table} for user ${userId}`);
+                        }
+                        return nextStatement(null);
+                    });
+                }, () => callback(firstErr));
+            });
+        }
 }
 
 module.exports = PgUsers;

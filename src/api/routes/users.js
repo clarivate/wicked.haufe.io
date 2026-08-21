@@ -542,8 +542,12 @@ users.patchUser = function (app, res, loggedInUserId, userId, userInfo) {
             if (!user) {
                 return utils.fail(res, 404, 'Not found.');
             }
-            if (userInfo.customId && userInfo.customId !== user.customId) {
-                return utils.fail(res, 400, 'Bad request. Changing custom ID is not allowed.');
+            const customIdChanged = userInfo.customId && userInfo.customId !== user.customId;
+            if (customIdChanged) {
+                if (!loggedInUserInfo.admin) {
+                    return utils.fail(res, 403, 'Not allowed. Only admins can change a user\'s custom ID.');
+                }
+                user.customId = userInfo.customId;
             }
             if (user.password &&
                 userInfo.email &&
@@ -559,6 +563,7 @@ users.patchUser = function (app, res, loggedInUserId, userId, userInfo) {
             if (userInfo.groups) {
                 user.groups = userInfo.groups;
             }
+            const emailChanged = userInfo.email && userInfo.email !== user.email;
             if (userInfo.email) {
                 user.email = userInfo.email;
             }
@@ -588,6 +593,12 @@ users.patchUser = function (app, res, loggedInUserId, userId, userInfo) {
             dao.users.save(user, loggedInUserId, (err) => {
                 if (err) {
                     return utils.fail(res, 500, 'patchUser: DAO returned an error', err);
+                }
+                 // Cascade email/customId to owners and registrations (non-blocking)
+                if (emailChanged || customIdChanged) {
+                    dao.users.cascadeUserFields(userId, emailChanged ? user.email : null, customIdChanged ? user.customId : null, (err) => {
+                        if (err) error(`patchUser: cascadeUserFields failed for user ${userId}: ${err.message}`);
+                    });
                 }
                 webhooks.logEvent(app, {
                     action: webhooks.ACTION_UPDATE,
