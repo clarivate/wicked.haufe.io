@@ -14,6 +14,48 @@ const isWosApiInContractedList = (apiId, wosContractedSubscriptions) => {
 };
 let isWosContractApi = false;
 
+function getRevokerGroupId(req) {
+    if (req.app && req.app.portalGlobals && req.app.portalGlobals.revokerGroup) {
+        return req.app.portalGlobals.revokerGroup;
+    }
+    return process.env.REVOKER_GROUP || null;
+}
+
+function getRevokeFeedback(req) {
+    if (req.query.revoke === 'success') {
+        return {
+            type: 'success',
+            message: 'Subscription access was revoked successfully.'
+        };
+    }
+    if (req.query.revoke === 'error') {
+        return {
+            type: 'danger',
+            message: 'Revoke action failed. Please retry or contact support if the problem persists.'
+        };
+    }
+    return null;
+}
+
+function getApiMap(apiList) {
+    const apiMap = {};
+    for (let i = 0; i < apiList.length; ++i) {
+        apiMap[apiList[i].id] = apiList[i];
+    }
+    return apiMap;
+}
+
+function userCanTrialRevokeSubscription(req, userInfo, apiInfo) {
+    if (!req.user || !req.user.admin || !userInfo || !Array.isArray(userInfo.groups) || !apiInfo) {
+        return false;
+    }
+    const revokerGroupId = getRevokerGroupId(req);
+    if (!revokerGroupId || !userInfo.groups.includes(revokerGroupId)) {
+        return false;
+    }
+    return !apiInfo.requiredGroup || apiInfo.partner || userInfo.groups.includes(apiInfo.requiredGroup);
+}
+
 
 router.get('/:appId', function (req, res, next) {
     debug("get('/:appId')");
@@ -31,6 +73,13 @@ router.get('/:appId', function (req, res, next) {
         },
         getApis: function (callback) {
           utils.getFromAsync(req, res, '/apis', 200, callback);
+        },
+        getUserInfo: function (callback) {
+            const loggedInUserId = utils.getLoggedInUserId(req);
+            if (!loggedInUserId) {
+                return callback(null, null);
+            }
+            utils.getFromAsync(req, res, '/users/' + loggedInUserId, 200, callback);
         }
     }, function (err, results) {
         if (err)
@@ -38,7 +87,13 @@ router.get('/:appId', function (req, res, next) {
         const application = results.getApplication;
         const roles = results.getRoles;
         const appSubs = results.getSubscriptions;
+        const userInfo = results.getUserInfo;
+        const revokeFeedback = getRevokeFeedback(req);
         let apiList = results.getApis.apis;
+        const apiMap = getApiMap(apiList);
+        for (let i = 0; i < appSubs.length; ++i) {
+            appSubs[i].canTrialRevoke = userCanTrialRevokeSubscription(req, userInfo, apiMap[appSubs[i].api]);
+        }
         const keyRotationEnabledApis = [];
         for (let i = 0; i < apiList.length; ++i) {
           if (apiList[i].keyRotationEnabled) {
@@ -63,7 +118,8 @@ router.get('/:appId', function (req, res, next) {
                 application: application,
                 roles: roles,
                 subscriptions: appSubs,
-                keyRotationEnabledApis: filteredKeyRotationEnabledApis
+                keyRotationEnabledApis: filteredKeyRotationEnabledApis,
+                revokeFeedback: revokeFeedback
             });
         } else {
             res.json({
@@ -709,15 +765,26 @@ router.post('/:appId/unsubscribe/:apiId', function (req, res, next) {
     debug("post('/:appId/unsubscribe/:apiId')");
     const appId = req.params.appId;
     const apiId = req.params.apiId;
+    const isTrialRevoke = req.query.revoke === '1';
 
-    utils.delete(req, '/applications/' + appId + '/subscriptions/' + apiId,
+    const deleteUri = '/applications/' + appId + '/subscriptions/' + apiId + (isTrialRevoke ? '?source=trial_revoke' : '');
+
+    utils.delete(req, deleteUri,
         function (err, apiResponse, apiBody) {
-            if (err)
+            if (err) {
+                if (isTrialRevoke && !utils.acceptJson(req))
+                    return res.redirect('/applications/' + appId + '?revoke=error');
                 return next(err);
-            if (204 != apiResponse.statusCode)
+            }
+            if (204 != apiResponse.statusCode) {
+                if (isTrialRevoke && !utils.acceptJson(req))
+                    return res.redirect('/applications/' + appId + '?revoke=error');
                 return utils.handleError(res, apiResponse, apiBody, next);
+            }
             // Yay2!
-            if (!utils.acceptJson(req))
+            if (isTrialRevoke && !utils.acceptJson(req))
+                res.redirect('/applications/' + appId + '?revoke=success');
+            else if (!utils.acceptJson(req))
                 res.redirect('/apis/' + apiId);
             else
                 res.status(204).json({});

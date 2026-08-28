@@ -22,6 +22,7 @@ const APPROVAL = 'approval'
 const SUBSCRIPTION_APPROVED = 'subscription approved'
 const DELETE_SUBSCRIPTION = 'delete subscription'
 const SUBSCRIPTION_DELETED = 'subscription deleted'
+const SUBSCRIPTION_REVOKED = 'subscription revoked'
 const ROLE_ADMIN ='Admin'
 const KEY_ROTATION_SUBSCRIPTION = 'key_rotation subscription'
 const REVOKE_OLD_KEY_SUBSCRIPTION = 'revoke_old_key subscription'
@@ -779,7 +780,7 @@ function processSubscriptionEntity(auditLog) {
           auditLog.activity = SUBSCRIPTION_APPROVED;
           break;
         case DELETE_SUBSCRIPTION:
-          auditLog.activity = SUBSCRIPTION_DELETED;
+                    auditLog.activity = auditLog.source == 'trial_revoke' ? SUBSCRIPTION_REVOKED : SUBSCRIPTION_DELETED;
           break;
         case KEY_ROTATION_SUBSCRIPTION:
           auditLog.activity = API_KEY_ROTATION;

@@ -85,7 +85,7 @@ applications.get('/:appId/subscriptions/:apiId', verifySubscriptionsReadScope, f
 });
 
 applications.delete('/:appId/subscriptions/:apiId', verifySubscriptionsWriteScope, function (req, res, next) {
-    subscriptions.deleteSubscription(req.app, res, applications, req.apiUserId, req.params.appId, req.params.apiId);
+    subscriptions.deleteSubscription(req.app, res, applications, req.apiUserId, req.params.appId, req.params.apiId, req.query.source);
 });
 
 applications.patch('/:appId/subscriptions/:apiId', verifySubscriptionsWriteScope, function (req, res, next) {

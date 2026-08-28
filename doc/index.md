@@ -32,6 +32,7 @@ If you feel something important is missing that should be documented, feel free 
 * [Using Deployment Environments](deployment-environments.md)
 * [Handling Credentials](handling-credentials.md)
 * [Defining User Groups](defining-user-groups.md)
+* [Trial Revoke POC (Revoker Group)](trial-revoke-poc.md)
 * [Setting up API Plans](setting-up-plans.md)
 * [Adding Custom Content to the API Portal](adding-custom-content.md)
 * [Monitoring the API Portal](monitoring.md)
