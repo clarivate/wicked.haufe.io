@@ -16,6 +16,25 @@ const daoUtils = require('../dao/dao-utils');
 const READ_SUBSCRIPTIONS = 'read_subscriptions';
 const verifySubscriptionsReadScope = utils.verifyScope(READ_SUBSCRIPTIONS);
 
+function getRevokerGroupId(app) {
+    const glob = utils.loadGlobals(app);
+    if (glob.revokerGroup) {
+        return glob.revokerGroup;
+    }
+    return process.env.REVOKER_GROUP || null;
+}
+
+function userCanTrialRevoke(app, userInfo, apiInfo) {
+    if (!userInfo || !userInfo.admin || !Array.isArray(userInfo.groups) || !apiInfo) {
+        return false;
+    }
+    const revokerGroupId = getRevokerGroupId(app);
+    if (!revokerGroupId || !userInfo.groups.includes(revokerGroupId)) {
+        return false;
+    }
+    return !apiInfo.requiredGroup || apiInfo.partner || userInfo.groups.includes(apiInfo.requiredGroup);
+}
+
 // ===== ENDPOINTS =====
 subscriptions.get('/', verifySubscriptionsReadScope, function (req, res, next) {
     const { offset, limit } = utils.getOffsetLimit(req);
@@ -653,6 +672,15 @@ subscriptions.deleteSubscription = function (app, res, applications, loggedInUse
             }
             if (!userInfo) {
                 return utils.fail(res, 403, 'Not allowed. User invalid.');
+            }
+
+            const isTrialRevoke = source === 'trial_revoke';
+            if (isTrialRevoke) {
+                const apis = utils.loadApis(app);
+                const selectedApi = apis.apis.find(api => api.id == apiId);
+                if (!userCanTrialRevoke(app, userInfo, selectedApi)) {
+                    return utils.fail(res, 403, 'Not allowed. Only configured admin revoker group users may revoke trial subscriptions.');
+                }
             }
 
             let isAllowed = false;

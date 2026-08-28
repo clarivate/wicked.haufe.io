@@ -766,29 +766,29 @@ router.post('/:appId/unsubscribe/:apiId', function (req, res, next) {
     const appId = req.params.appId;
     const apiId = req.params.apiId;
     const isTrialRevoke = req.query.revoke === '1';
-
     const deleteUri = '/applications/' + appId + '/subscriptions/' + apiId + (isTrialRevoke ? '?source=trial_revoke' : '');
 
-    utils.delete(req, deleteUri,
-        function (err, apiResponse, apiBody) {
-            if (err) {
-                if (isTrialRevoke && !utils.acceptJson(req))
-                    return res.redirect('/applications/' + appId + '?revoke=error');
-                return next(err);
-            }
-            if (204 != apiResponse.statusCode) {
-                if (isTrialRevoke && !utils.acceptJson(req))
-                    return res.redirect('/applications/' + appId + '?revoke=error');
-                return utils.handleError(res, apiResponse, apiBody, next);
-            }
-            // Yay2!
+    const callback = function (err, apiResponse, apiBody) {
+        if (err) {
             if (isTrialRevoke && !utils.acceptJson(req))
-                res.redirect('/applications/' + appId + '?revoke=success');
-            else if (!utils.acceptJson(req))
-                res.redirect('/apis/' + apiId);
-            else
-                res.status(204).json({});
-        });
+                return res.redirect('/applications/' + appId + '?revoke=error');
+            return next(err);
+        }
+        if (204 != apiResponse.statusCode) {
+            if (isTrialRevoke && !utils.acceptJson(req))
+                return res.redirect('/applications/' + appId + '?revoke=error');
+            return utils.handleError(res, apiResponse, apiBody, next);
+        }
+        // Yay2!
+        if (isTrialRevoke && !utils.acceptJson(req))
+            res.redirect('/applications/' + appId + '?revoke=success');
+        else if (!utils.acceptJson(req))
+            res.redirect('/apis/' + apiId);
+        else
+            res.status(204).json({});
+    };
+
+    utils.delete(req, deleteUri, callback);
 });
 
 module.exports = router;
