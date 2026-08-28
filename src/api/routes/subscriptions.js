@@ -638,7 +638,7 @@ function findApprovalIndex(approvalInfos, appId, apiId) {
     return approvalIndex;
 }
 
-subscriptions.deleteSubscription = function (app, res, applications, loggedInUserId, appId, apiId) {
+subscriptions.deleteSubscription = function (app, res, applications, loggedInUserId, appId, apiId, source) {
     debug('deleteSubscription(): ' + appId + ', apiId: ' + apiId);
     dao.applications.getById(appId, (err, appInfo) => {
         if (err) {
@@ -701,7 +701,8 @@ subscriptions.deleteSubscription = function (app, res, applications, loggedInUse
                             applicationId: appId,
                             apiId: apiId,
                             userId: loggedInUserId,
-                            auth: subscriptionData.auth
+                            auth: subscriptionData.auth,
+                            ...(source ? { source: source } : {})
                         }
                     });
                 });

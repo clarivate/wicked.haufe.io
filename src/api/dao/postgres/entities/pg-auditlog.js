@@ -128,6 +128,11 @@ class PgAuditlog {
                 alias: 'application'
             },
             {
+                source: 'data->\'data\'->>\'source\'',
+                as: 'source',
+                alias: 'source'
+            },
+            {
                 source: 'created_at',
                 as: 'created_at',
                 alias: 'created_at'
