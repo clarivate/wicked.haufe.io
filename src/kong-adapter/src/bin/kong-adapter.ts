@@ -14,8 +14,9 @@ const axios = require('axios');
 const fs = require('fs');
 const path = require('path');
 var watcherDebouceTimeout;
+var watcherRetryTimeout;
 var watcherChanges = [];
-const watcherDebouceTime = 10000; // 5 seconds
+const watcherDebouceTime = 10000; // 10 seconds
 const staticConfigFolder =  process.env.PORTAL_API_STATIC_CONFIG
 // On Demand Resync Changes : End
 
@@ -104,6 +105,12 @@ info(`wicked-config Watcher: Watching for changes in :${staticConfigFolder}`);
 
 let watchDirectory = (directory) => {
     // Watch the directory itself
+    if (!fs.existsSync(directory)) {
+        warn(`wicked-config Watcher: Directory is unavailable: ${directory}; retrying in 10 seconds.`);
+        clearTimeout(watcherRetryTimeout);
+        watcherRetryTimeout = setTimeout(() => watchDirectory(directory), watcherDebouceTime);
+        return;
+    }try{
     fs.watch(directory, (eventType, fileName) => {
         info(`wicked-config Watcher: Detected change in :${fileName} , event: ${eventType}`);
         if (fileName == "config.json") {
@@ -114,11 +121,18 @@ let watchDirectory = (directory) => {
             watcherChanges.push(fileName);
         }
         info('wicked-config Watcher: Waiting for more changes to arrive..');
-        clearTimeout(watcherDebouceTime);
+        clearTimeout(watcherDebouceTimeout);
         watcherDebouceTimeout = setTimeout(() => {
             startResync();
         }, watcherDebouceTime);
     });
+    } catch (err) {
+        error(`wicked-config Watcher: Failed to watch ${directory}.`);
+        error(err);
+        clearTimeout(watcherRetryTimeout);
+        watcherRetryTimeout = setTimeout(() => watchDirectory(directory), watcherDebouceTime);
+        return;
+    }
     // Watch all files and subdirectories in the directory
     fs.readdir(directory, (err, files) => {
       if (err) {
@@ -229,11 +243,20 @@ function detectChangedApis(rootFolder, initOptions) {
         let changedApis = [];
 
         function isFileChanged(filePath, currentTime, timeThreshold) {
-            const stats = fs.statSync(filePath);
-            const lastModifiedTime = stats.mtime;
-            const timeDifference = currentTime.getTime() - lastModifiedTime.getTime();
-            const diffInMinutes = timeDifference / (1000 * 60);
-            return diffInMinutes <= timeThreshold;
+            if (!fs.existsSync(filePath)) {
+                warn(`wicked-config Watcher: Path is unavailable: ${filePath}`);
+                return false;
+            }
+            try {
+                const stats = fs.statSync(filePath);
+                const lastModifiedTime = stats.mtime;
+                const timeDifference = currentTime.getTime() - lastModifiedTime.getTime();
+                const diffInMinutes = timeDifference / (1000 * 60);
+                return diffInMinutes <= timeThreshold;
+            } catch (err) {
+                warn(`wicked-config Watcher: Could not read path: ${filePath}`);
+                return false;
+            }
         }
 
         const rootFolderChanged = isFileChanged(rootFolder, currentTime, 60);
@@ -270,7 +293,7 @@ function detectChangedApis(rootFolder, initOptions) {
         debug("done with getChangedFolders");
     }
     catch(err) {
-        debug('error occured during the api changed filkes detection')
+        debug('error occured during the api changed files detection')
         debug(err)
     }
 }

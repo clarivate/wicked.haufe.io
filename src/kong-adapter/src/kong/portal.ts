@@ -161,6 +161,9 @@ let _actualApisDate = 0;
 function getActualApis(callback: Callback<ApiDescriptionCollection>) {
     debug('getActualApis()');
     const now = (new Date()).getTime();
+    const cacheAgeMs = now - _actualApisDate;
+    debug(`getActualApis(): cache timestamp=${new Date(_actualApisDate).toISOString()}, now=${new Date(now).toISOString()}, ageMs=${cacheAgeMs}, intervalMs=${REFRESH_API_INTERVAL}`);
+    debug (`getActualApis():--> ${_actualApis ? JSON.stringify(_actualApis) : 'null'}`);
     if (now - _actualApisDate < REFRESH_API_INTERVAL) {
             debug('getActualApis(): using cached APIs');
         if (_actualApis){
